@@ -147,3 +147,14 @@ struct NativeSidebarTabView: View {
         .tabViewStyle(.sidebarAdaptable)
     }
 }
+
+private final class NativePathBox { var value = SwiftUI.Path() }
+private func nativePathBox(_ pointer: UnsafeMutableRawPointer) -> NativePathBox { requireNativeMainThread(); return Unmanaged<NativePathBox>.fromOpaque(pointer).takeUnretainedValue() }
+func copiedNativePath(_ pointer: UnsafeMutableRawPointer) -> SwiftUI.Path { nativePathBox(pointer).value }
+@_cdecl("sui_path_create") public func pathCreate() -> UnsafeMutableRawPointer { requireNativeMainThread(); return Unmanaged.passRetained(NativePathBox()).toOpaque() }
+@_cdecl("sui_path_move") public func pathMove(_ pointer: UnsafeMutableRawPointer, _ x: Double, _ y: Double) { nativePathBox(pointer).value.move(to: CGPoint(x: x, y: y)) }
+@_cdecl("sui_path_line") public func pathLine(_ pointer: UnsafeMutableRawPointer, _ x: Double, _ y: Double) { nativePathBox(pointer).value.addLine(to: CGPoint(x: x, y: y)) }
+@_cdecl("sui_path_curve") public func pathCurve(_ pointer: UnsafeMutableRawPointer, _ x: Double, _ y: Double, _ c1x: Double, _ c1y: Double, _ c2x: Double, _ c2y: Double) { nativePathBox(pointer).value.addCurve(to: CGPoint(x: x, y: y), control1: CGPoint(x: c1x, y: c1y), control2: CGPoint(x: c2x, y: c2y)) }
+@_cdecl("sui_path_arc") public func pathArc(_ pointer: UnsafeMutableRawPointer, _ x: Double, _ y: Double, _ radius: Double, _ start: Double, _ end: Double, _ clockwise: Int32) { nativePathBox(pointer).value.addArc(center: CGPoint(x: x, y: y), radius: radius, startAngle: .degrees(start), endAngle: .degrees(end), clockwise: clockwise != 0) }
+@_cdecl("sui_path_close") public func pathClose(_ pointer: UnsafeMutableRawPointer) { nativePathBox(pointer).value.closeSubpath() }
+@_cdecl("sui_path_release") public func pathRelease(_ pointer: UnsafeMutableRawPointer) { requireNativeMainThread(); Unmanaged<NativePathBox>.fromOpaque(pointer).release() }

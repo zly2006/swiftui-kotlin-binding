@@ -8,10 +8,10 @@
 
 | 类别 | 关键组件和能力 | 当前状态 |
 | --- | --- | --- |
-| 文字和图片 | Text、Image/SF Symbols；Label、图片资源、AsyncImage | Text 与系统符号已生成，其余待补。 |
+| 文字和图片 | Text、Image/SF Symbols、Label；图片资源、AsyncImage | Text、Label 与系统符号已生成，其余待补。 |
 | 布局 | HStack、VStack、ZStack、Group、Spacer、Divider、GeometryReader；Grid 和 LazyGrid | 栈、分隔和尺寸回调已生成，网格待补。 |
 | 滚动与集合 | ScrollView、LazyHStack、LazyVStack；ScrollViewReader、List、Section、Form、Table | 滚动与懒栈已生成，集合和滚动定位待补。 |
-| 操作和输入 | Button、Toggle、TextField、Slider、ProgressView；Picker、Stepper、ColorPicker、DatePicker、SecureField、TextEditor | 前五类已生成，其他进入下一批。旧实验中的 ColorPicker 尚未迁入新的原生运行时。 |
+| 操作和输入 | Button、Toggle、TextField、TextEditor、Slider、ProgressView；Picker、Stepper、ColorPicker、DatePicker、SecureField | 前六类已生成，其他进入下一批。旧实验中的 ColorPicker 尚未迁入新的原生运行时。 |
 | 导航 | NavigationStack、TabView、Tab、TabSection；NavigationLink、NavigationSplitView、toolbar | 栈、侧栏式标签和隐藏工具栏已生成，其余待补。 |
 | 弹窗和菜单 | sheet、popover、alert、confirmationDialog、Menu、contextMenu、文件选择 | 查漏后列入待实现。 |
 | 视觉效果 | 原生颜色、形状、渐变、材质、字体、前景、裁切、阴影、透明度、缩放 | 已生成基本组合；原生动画、转场、符号动效、玻璃效果与环境传播仍需补齐。 |
@@ -36,6 +36,8 @@
 | [IceCubes DisplaySettingsView](https://github.com/Dimillian/IceCubesApp/blob/9efcb16e720f337a401cf61c8e300dd043368282/IceCubesApp/App/Tabs/Settings/DisplaySettingsView.swift) | Form、Section、ColorPicker、Picker、Slider、NavigationLink | 补充表单、颜色选择、导航跳转和带步长的滑块。 |
 
 本轮核读的是这些代表性页面，不是对两个开源项目的完整扫描。后续遇到新的页面或效果，先登记实际需求、官方 API 和源码依据，再选择需要生成的接口。
+
+独立样本还核读了 [CapyTimer](../samples/capytimer/README.md) 的主面板和 [LiquidGlassDemo](../samples/liquid-glass/README.md) 的三栏页面。新增白名单能力包括 TextEditor、原生按钮样式、语义字体、圆环、MeshGradient、多色渐变、椭圆、路径、Canvas 描边、遮罩、模糊、圆角边框与 hover 回调；均由同一语义模型生成。路径的几何和视觉参数在 Kotlin 中声明，Swift 仅桥接官方 Path 操作。
 
 ## 扩展规则
 

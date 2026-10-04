@@ -34,6 +34,45 @@ private class NativeRecorder {
 }
 
 class NativeCompositionTest {
+    @Test fun drawingUpdatesPreserveNodesAndHoverUsesLatestCallback() = runTest {
+        val recorder = NativeRecorder()
+        var color by mutableStateOf(NativeColor.Blue)
+        var endpoint by mutableStateOf(20.0)
+        var callbackVersion by mutableStateOf(1)
+        var observedVersion = 0
+        var observedHover = false
+        val composition = NativeComposition(recorder.backend, StandardTestDispatcher(testScheduler))
+        composition.setContent {
+            val version = callbackVersion
+            val path = NativePath(listOf(NativePathCommand.Move(0.0, 0.0), NativePathCommand.Line(endpoint, endpoint)))
+            Box(modifier = NativeModifier.hover { observedVersion = version; observedHover = it }) {
+                MeshGradient(2.0, 2.0, listOf(0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0), List(4) { color })
+                PathFillGradient(path, listOf(color, NativeColor.Clear))
+            }
+        }
+        runCurrent()
+        val created = recorder.all.size
+        color = NativeColor.Purple
+        endpoint = 40.0
+        callbackVersion = 2
+        runCurrent()
+        assertEquals(created, recorder.all.size)
+        val mesh = recorder.all.single { it.kind == "MeshGradient" }.config as MeshGradientConfig
+        assertEquals(List(4) { NativeColor.Purple }, mesh.colors)
+        val fill = recorder.all.single { it.kind == "PathFillGradient" }.config as PathFillGradientConfig
+        assertEquals(NativePathCommand.Line(40.0, 40.0), fill.path.commands.last())
+        assertEquals(listOf(NativeColor.Purple, NativeColor.Clear), fill.colors)
+        @Suppress("UNCHECKED_CAST")
+        val hover = recorder.all.single { it.kind == "Hover" }.callback as (Boolean) -> Unit
+        hover(true)
+        assertEquals(2, observedVersion)
+        assertTrue(observedHover)
+        val idleFrames = composition.scheduledFrames
+        advanceTimeBy(5000); runCurrent()
+        assertEquals(idleFrames, composition.scheduledFrames)
+        composition.close(); runCurrent()
+        assertTrue(recorder.all.all { it.releases == 1 })
+    }
     @Test fun generatedControlsUpdateExistingNodesAndUseLatestCallback() = runTest {
         val recorder = NativeRecorder()
         var count by mutableStateOf(0)

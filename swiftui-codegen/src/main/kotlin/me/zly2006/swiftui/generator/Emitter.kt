@@ -10,6 +10,9 @@ private fun ValueType.kotlin(): String = when (this) {
     ValueType.Boolean -> "Boolean"
     ValueType.Color -> "NativeColor"
     ValueType.Size -> "NativeSize"
+    ValueType.Numbers -> "List<Double>"
+    ValueType.Colors -> "List<NativeColor>"
+    ValueType.Path -> "NativePath"
     is ValueType.Enumeration -> name
 }
 private fun ValueType.swift(): String = when (this) {
@@ -19,16 +22,25 @@ private fun ValueType.swift(): String = when (this) {
     ValueType.Boolean -> "Bool"
     ValueType.Color -> "NativeColorValue"
     ValueType.Size -> "CGSize"
+    ValueType.Numbers -> "[Double]"
+    ValueType.Colors -> "[NativeColorValue]"
+    ValueType.Path -> "SwiftUI.Path"
     is ValueType.Enumeration -> "Int32"
 }
 private data class AbiField(val name: String, val c: String, val swift: String, val kotlin: String)
 private fun Field.abi(): List<AbiField> = when (type) {
+    ValueType.Path -> listOf(AbiField(name, "void*", "UnsafeMutableRawPointer", "${name}Handle"))
+    ValueType.Numbers -> listOf(AbiField("${name}Values", "const double*", "UnsafePointer<Double>", "${name}Buffer"), AbiField("${name}Count", "int32_t", "Int32", "$name.size"))
+    ValueType.Colors -> listOf(AbiField("${name}Kinds", "const int32_t*", "UnsafePointer<Int32>", "${name}KindsBuffer"), AbiField("${name}Components", "const double*", "UnsafePointer<Double>", "${name}ComponentsBuffer"), AbiField("${name}Count", "int32_t", "Int32", "$name.size"))
     ValueType.Size -> listOf(AbiField("${name}Width", "double", "Double", "$name.width"), AbiField("${name}Height", "double", "Double", "$name.height"))
     ValueType.Color -> listOf(AbiField("${name}Kind", "int32_t", "Int32", "$name.kind")) +
         listOf("red", "green", "blue", "alpha", "opacity").map { AbiField(name + it.replaceFirstChar(Char::uppercase), "double", "Double", "$name.$it") }
     else -> listOf(AbiField(name, when (type) { ValueType.Text -> "const char*"; ValueType.Boolean, is ValueType.Enumeration -> "int32_t"; else -> "double" }, when (type) { ValueType.Text -> "UnsafePointer<CChar>"; ValueType.Boolean, is ValueType.Enumeration -> "Int32"; else -> "Double" }, when (type) { ValueType.OptionalNumber -> "$name ?: Double.NaN"; ValueType.Boolean -> "if ($name) 1 else 0"; is ValueType.Enumeration -> "$name.nativeValue"; else -> name }))
 }
 private fun Field.swiftArgument() = when (type) {
+    ValueType.Path -> "copiedNativePath($name)"
+    ValueType.Numbers -> "Array(UnsafeBufferPointer(start: ${name}Values, count: Int(${name}Count)))"
+    ValueType.Colors -> "(0..<Int(${name}Count)).map { index in let offset = index * 5; return NativeColorValue(kind: ${name}Kinds[index], red: ${name}Components[offset], green: ${name}Components[offset + 1], blue: ${name}Components[offset + 2], alpha: ${name}Components[offset + 3], opacity: ${name}Components[offset + 4]) }"
     ValueType.Text -> "String(cString: $name)"
     ValueType.Boolean -> "$name != 0"
     ValueType.OptionalNumber -> "$name.isNaN ? nil : $name"
@@ -54,7 +66,7 @@ fun generate(destination: File) {
     check(bindings.map { it.abi }.distinct().size == bindings.size)
     bindings.forEach { binding ->
         check(binding.fields.map { it.name }.distinct().size == binding.fields.size)
-        check(binding.modifier == null || binding.children == Children.One && binding.callback == null)
+        check(binding.modifier == null || binding.children == Children.One)
     }
     fun output(name: String, body: String) { File(destination, name).apply { parentFile.mkdirs(); writeText(generatedNotice + body) } }
     output("include/NativeUI.h", header())
@@ -70,6 +82,7 @@ fun generate(destination: File) {
 
 private fun header() = buildString {
     append("#pragma once\n#include <stdint.h>\ntypedef void* SUI_Node;\n")
+    append("void* sui_path_create(void);\nvoid sui_path_move(void* path, double x, double y);\nvoid sui_path_line(void* path, double x, double y);\nvoid sui_path_curve(void* path, double x, double y, double c1x, double c1y, double c2x, double c2y);\nvoid sui_path_arc(void* path, double x, double y, double radius, double start, double end, int32_t clockwise);\nvoid sui_path_close(void* path);\nvoid sui_path_release(void* path);\n")
     bindings.mapNotNull { it.callback }.distinctBy { it.cType() }.forEach { callback ->
         append("typedef void (*${callback.cType()})(void* context${callback.payloadAbi().joinToString("") { ", ${it.c} ${it.name}" }});\n")
     }
@@ -138,8 +151,9 @@ private fun composeComponents() = buildString {
         append("    modifier.wrap {\n        ComposeNode<UiNode, NativeUiApplier>(\n            factory = { UiNode(backend, backend.create${b.name}(config$callback)) },\n            update = { set(config) { backend.update${b.name}(element, it) } },\n")
         append("            content = ${if (b.children == Children.None) "{}" else "content"},\n        )\n    }\n}\n\n")
         b.modifier?.let { modifier ->
-            val fields = b.fields.joinToString { "${it.name}: ${it.type.kotlin()}${it.default?.let { d -> " = $d" }.orEmpty()}" }
-            append("fun NativeModifier.$modifier($fields): NativeModifier = then { content -> ${b.name}(${b.fields.joinToString { "${it.name} = ${it.name}" }}${if (b.fields.isEmpty()) "" else ", "}content = content) }\n\n")
+            val fields = (b.fields.map { "${it.name}: ${it.type.kotlin()}${it.default?.let { d -> " = $d" }.orEmpty()}" } + listOfNotNull(b.callback?.let { "${it.name}: ${it.kotlinType()}" })).joinToString()
+            val arguments = (b.fields.map { "${it.name} = ${it.name}" } + listOfNotNull(b.callback?.let { "${it.name} = ${it.name}" }) + "content = content").joinToString()
+            append("fun NativeModifier.$modifier($fields): NativeModifier = then { content -> ${b.name}($arguments) }\n\n")
         }
     }
     append("fun NativeModifier.padding(all: Double) = padding(all, all, all, all)\n")
@@ -155,7 +169,7 @@ private fun swiftBindings() = buildString {
     append("struct NativeColorValue: Equatable {\n    let kind: Int32\n    let red, green, blue, alpha, opacity: Double\n    var color: SwiftUI.Color {\n        let base: SwiftUI.Color\n        switch kind {\n        case -1: base = Color(.sRGB, red: red, green: green, blue: blue, opacity: alpha)\n")
     namedColors.forEachIndexed { i, name ->
         val swift = name.replaceFirstChar(Char::lowercase)
-        append("        case $i: base = .$swift\n")
+        append("        case $i: base = ${if (name == "WindowBackground") "Color(nsColor: .windowBackgroundColor)" else ".$swift"}\n")
     }
     append("        default: preconditionFailure(\"Invalid native color\")\n        }\n        return opacity == 1 ? base : base.opacity(opacity)\n    }\n}\n\n")
     for (b in bindings) {
@@ -194,10 +208,34 @@ private fun macosBindings() = buildString {
         val callback = b.callback
         val ffiArgs = b.fields.flatMap { it.abi() }.joinToString { it.kotlin.replace(Regex("\\b(${b.fields.joinToString("|") { field -> field.name }})\\b")) { match -> "config.${match.value}" } }
         append("    override fun create${b.name}(config: ${b.name}Config${callback?.let { ", ${it.name}: ${it.kotlinType()}" }.orEmpty()}): NativeUiElement {\n        checkNativeUiMainThread()\n")
+        val arrays = b.fields.filter { it.type == ValueType.Numbers || it.type == ValueType.Colors || it.type == ValueType.Path }
+        fun buffers() = buildString {
+            for (field in arrays) {
+                val n = field.name
+                if (field.type == ValueType.Path) {
+                    append("            val ${n}Handle = buildNativePath(config.$n)\n")
+                } else if (field.type == ValueType.Numbers) {
+                    append("            val ${n}Buffer = allocArray<DoubleVar>(config.$n.size.coerceAtLeast(1))\n")
+                    append("            config.$n.forEachIndexed { i, value -> ${n}Buffer[i] = value }\n")
+                } else {
+                    append("            val ${n}KindsBuffer = allocArray<IntVar>(config.$n.size.coerceAtLeast(1))\n")
+                    append("            val ${n}ComponentsBuffer = allocArray<DoubleVar>((config.$n.size * 5).coerceAtLeast(1))\n")
+                    append("            config.$n.forEachIndexed { i, color -> ${n}KindsBuffer[i] = color.kind; listOf(color.red, color.green, color.blue, color.alpha, color.opacity).forEachIndexed { j, value -> ${n}ComponentsBuffer[i * 5 + j] = value } }\n")
+                }
+            }
+        }
+        val paths = arrays.filter { it.type == ValueType.Path }
+        val releasePaths = paths.joinToString("; ") { "sui_path_release(${it.name}Handle)" }
         if (callback != null) {
+            check(arrays.isEmpty()) { "Collection callback adapters require explicit ownership support" }
             append("        return ownCallback(\"${b.name}\", NativeCallback { ${callback.name}(${if (callback.payload == null) "" else "it as ${callback.payload.kotlin()}"}) }) { context ->\n            checkNotNull(sui_node_${b.abi}_create($ffiArgs${if (ffiArgs.isEmpty()) "" else ", "}staticCFunction(::${callback.cType()}), context))\n        }\n")
+        } else if (arrays.isNotEmpty()) {
+            append("        return memScoped {\n${buffers()}            try { own(\"${b.name}\") { checkNotNull(sui_node_${b.abi}_create($ffiArgs)) } } finally { $releasePaths }\n        }\n")
         } else append("        return own(\"${b.name}\") { checkNotNull(sui_node_${b.abi}_create($ffiArgs)) }\n")
-        append("    }\n    override fun update${b.name}(element: NativeUiElement, config: ${b.name}Config) {\n        sui_node_${b.abi}_update(checked(element, \"${b.name}\")${if (ffiArgs.isEmpty()) "" else ", "}$ffiArgs)\n    }\n")
+        append("    }\n    override fun update${b.name}(element: NativeUiElement, config: ${b.name}Config) {\n")
+        if (arrays.isNotEmpty()) append("        memScoped {\n${buffers()}            try { sui_node_${b.abi}_update(checked(element, \"${b.name}\")${if (ffiArgs.isEmpty()) "" else ", "}$ffiArgs) } finally { $releasePaths }\n        }\n")
+        else append("        sui_node_${b.abi}_update(checked(element, \"${b.name}\")${if (ffiArgs.isEmpty()) "" else ", "}$ffiArgs)\n")
+        append("    }\n")
     }
     append("}\n")
 }

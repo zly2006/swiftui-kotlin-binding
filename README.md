@@ -6,13 +6,21 @@ Kotlin 负责 UI 声明、布局意图、视觉参数、状态和行为；Swift 
 
 ## 模块
 
-项目保留三个库模块和两个测试模块，职责与依赖见 [modules.md](docs/modules.md)。旧 Skia 混合宿主和四类手写绑定已移除。
+项目保留三个库模块，示例与测试宿主独立放在 `samples/`，职责与依赖见 [modules.md](docs/modules.md)。旧 Skia 混合宿主和四类手写绑定已移除。
 
 - `swiftui-codegen`：白名单与语义模型的构建期生成器。
 - `swiftui-bridge`：SwiftUI 原生宿主、必要语义适配、动态库和 C ABI。
 - `swiftui-compose`：公共 Kotlin Composable API 与 Compose Runtime 接入。
 - `samples:demo-ui`：纯 Kotlin 测试 UI；外部应用样本仅本地保留。
 - `samples:native-macos`：macOS 窗口、应用生命周期和打包测试入口。
+- `samples:sample-host`：独立开源样本共用的 Kotlin/macOS 窗口与截图宿主。
+
+## UI 示例
+
+- [CapyTimer](samples/capytimer/README.md)：计时面板、任务列表、Notes 与设置。
+- [Liquid Glass](samples/liquid-glass/README.md)：六种深色主题、网格渐变、玻璃卡片与 Kotlin 路径图标。
+
+两个示例均使用纯 Kotlin Composable 定义页面，调用原生 SwiftUI 绘制；各自 README 包含实际运行截图、关键代码和上游 MIT credits。
 
 ## 构建与验证
 
@@ -23,7 +31,7 @@ export JAVA_HOME="$(/usr/libexec/java_home -v 21 -a arm64)"
 ./gradlew :swiftui-codegen:test :swiftui-compose:jvmTest :samples:native-macos:linkDebugExecutableMacosArm64
 ```
 
-本地打包和自身窗口验证使用 `scripts/build-native.sh` 与 `scripts/verify-native.sh`。外部应用的源码、资源、参考图片及应用包不提交，测试样本不属于公开库依赖。
+本地打包和自身窗口验证使用 `scripts/build-native.sh` 与 `scripts/verify-native.sh`。两个独立样本可分别执行 `:samples:capytimer:linkDebugExecutableMacosArm64` 和 `:samples:liquid-glass:linkDebugExecutableMacosArm64` 构建。上游源码、参考图片及应用包不提交，测试样本不属于库依赖。
 
 ## 维护依据
 

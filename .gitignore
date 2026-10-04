@@ -9,3 +9,6 @@ local.properties
 # External fixtures and visual evidence are local-only.
 /local-fixtures/
 /evidence/
+
+# Local comparison evidence is separate from the sample showcases.
+/samples/*/verification.json
