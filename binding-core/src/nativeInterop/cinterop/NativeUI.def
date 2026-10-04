@@ -1,0 +1,2 @@
+headers = NativeUI.h
+package = me.zly2006.swiftui.capi

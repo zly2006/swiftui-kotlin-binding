@@ -1,0 +1,11 @@
+**/build/
+.gradle/
+.kotlin/
+work/
+.DS_Store
+.idea/
+local.properties
+
+# External fixtures and visual evidence are local-only.
+/local-fixtures/
+/evidence/
