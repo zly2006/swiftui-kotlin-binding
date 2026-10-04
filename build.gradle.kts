@@ -11,7 +11,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.37.0" apply false
 }
 allprojects {
-    group = "me.zly2006"
+    group = "me.zly2006.swiftui"
     version = "0.1.0"
 
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
@@ -26,9 +26,17 @@ allprojects {
 
 subprojects {
     plugins.withId("com.vanniktech.maven.publish") {
+        check(project.name in setOf("swiftui-compose", "swiftui-bridge")) { "Only runtime library modules may be published" }
+        tasks.matching { it.name.startsWith("publish") && it.name.contains("MavenCentral") }.configureEach {
+            doFirst {
+                check(providers.gradleProperty("allowCentralUpload").orNull == "true") {
+                    "Central publishing is stopped. Explicitly authorize publishing before using -PallowCentralUpload=true."
+                }
+            }
+        }
         extensions.configure<MavenPublishBaseExtension> {
-            coordinates("me.zly2006", project.name, project.version.toString())
-            publishToMavenCentral(automaticRelease = true, validateDeployment = DeploymentValidation.PUBLISHED)
+            coordinates(project.group.toString(), project.name, project.version.toString())
+            publishToMavenCentral(automaticRelease = false, validateDeployment = DeploymentValidation.VALIDATED)
             signAllPublications()
             pom {
                 name.set("SwiftUI Kotlin Binding — ${project.name}")
@@ -37,7 +45,7 @@ subprojects {
                         "swiftui-compose" ->
                             "Kotlin Composables backed by native SwiftUI, with Compose Runtime state and incremental updates."
                         "swiftui-bridge" -> "Typed Kotlin/Native interoperability and an embedded SwiftUI native bridge for macOS arm64."
-                        else -> "Whitelist-driven generator for typed SwiftUI C, Swift, Kotlin, and Composable bindings."
+                        else -> error("Unexpected publication module")
                     },
                 )
                 url.set("https://github.com/zly2006/swiftui-kotlin-binding")

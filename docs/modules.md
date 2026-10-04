@@ -1,10 +1,10 @@
 # 当前模块职责
 
-项目保留三个库模块，通用测试界面与宿主，以及独立的开源 UI 示例。旧 Compose/Skia 实验、对应示例及四类手写组件绑定已经删除；当前只有原生 SwiftUI 渲染路径。
+项目保留两个运行库模块和一个构建期生成工具，另有通用测试界面、宿主及独立开源 UI 示例。旧 Compose/Skia 实验、对应示例及四类手写组件绑定已经删除；当前只有原生 SwiftUI 渲染路径。
 
 | 模块 | 职责 | 主要输入与输出 |
 | --- | --- | --- |
-| `swiftui-codegen` | 构建期代码生成。根据白名单和语义模型生成逐项接口，避免人工同步重复声明。 | 输入为 `Whitelist.kt` 和 `Model.kt`；输出为 `build/generated/native-ui/` 下的 C 头文件、Swift 转发、公共 Kotlin API、macOS 绑定及 Composable。它不参与应用运行。 |
+| `swiftui-codegen` | 构建期代码生成。根据白名单和语义模型生成逐项接口，避免人工同步重复声明。 | 输入为 `Whitelist.kt` 和 `Model.kt`；输出为 `build/generated/native-ui/` 下的 C 头文件、Swift 转发、公共 Kotlin API、macOS 绑定及 Composable。它不参与应用运行，也不发布到 Maven。 |
 | `swiftui-bridge` | macOS 原生桥的编译与 C 互操作。保留必要的 SwiftUI 宿主、原生节点、子内容适配及资源持有逻辑。 | 将 `NativeTreeRuntime.swift` 与生成的 Swift 编译为静态桥，并内嵌到发布的 cinterop `.klib`；通过生成的 `NativeUI.h` 导入 C ABI，统一检查主线程。旧的动态库任务仍供本地打包使用。没有 Compose、应用页面或 JVM 渲染实现。 |
 | `swiftui-compose` | 面向 Kotlin 使用者的运行库。提供生成的原生 Composable API、状态与重组接入、节点更新、回调和所有权管理。 | 依赖 Compose Runtime；macOS 实现依赖 `swiftui-bridge`。公共 UI API 不暴露 C 指针。JVM target 用于公共 API 编译和接入测试，不提供 Apple UI 渲染。 |
 | `samples:demo-ui` | 独立的纯 Kotlin 测试界面，包含本项目编写的通用控件示例；外部应用的 UI 可在本地挂载。 | 只依赖 `swiftui-compose`，不导入 AppKit、cinterop 或 Swift。外部应用的测试源码和资源被忽略，不进入提交。 |

@@ -36,7 +36,7 @@ kotlin {
         }
     }
     sourceSets.commonMain.dependencies {
-        implementation("me.zly2006:swiftui-compose:0.1.0")
+        implementation("me.zly2006.swiftui:swiftui-compose:0.1.0")
     }
 }
 ```

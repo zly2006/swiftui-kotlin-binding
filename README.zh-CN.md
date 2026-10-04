@@ -6,7 +6,7 @@
 
 使用 Compose 语法，由 Kotlin 管理状态，让 Apple 原生控件完成绘制。
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/) [![Compose Runtime](https://img.shields.io/badge/Compose_Runtime-1.11.1-4285F4)](https://www.jetbrains.com/compose-multiplatform/) [![Platform](https://img.shields.io/badge/platform-macOS_arm64-111111?logo=apple)](#支持范围) [![License](https://img.shields.io/badge/license-GPL_v3-blue)](LICENSE) [![Maven Central](https://img.shields.io/badge/Maven_Central-pending_namespace-d97706)](docs/releasing.md)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/) [![Compose Runtime](https://img.shields.io/badge/Compose_Runtime-1.11.1-4285F4)](https://www.jetbrains.com/compose-multiplatform/) [![Platform](https://img.shields.io/badge/platform-macOS_arm64-111111?logo=apple)](#支持范围) [![License](https://img.shields.io/badge/license-GPL_v3-blue)](LICENSE) [![Maven Central](https://img.shields.io/badge/Maven_Central-publication_paused-d97706)](docs/releasing.md)
 
 [English](README.md) · **简体中文**
 
@@ -57,7 +57,7 @@ export JAVA_HOME="$(/usr/libexec/java_home -v 21 -a arm64)"
 
 ### 添加到 Kotlin 项目
 
-Maven Central 发布正在等待命名空间授权。以下坐标将在发布后可用，当前可先通过源码运行示例。
+Maven Central 发布已暂停。以下是为下一次发布准备的正确坐标，当前可先通过源码运行示例。
 
 使用 Kotlin **2.4.0**、Kotlin Compose 编译器插件和 `macosArm64()` target。添加 Maven Central 与公共运行库依赖：
 
@@ -67,7 +67,7 @@ repositories { mavenCentral() }
 kotlin {
     macosArm64()
     sourceSets.commonMain.dependencies {
-        implementation("me.zly2006:swiftui-compose:0.1.0")
+        implementation("me.zly2006.swiftui:swiftui-compose:0.1.0")
     }
 }
 ```
@@ -108,7 +108,7 @@ Compose Runtime → 增量更新原生节点
 | --- | --- |
 | [`swiftui-compose`](swiftui-compose/) | 公共 Kotlin Composable、Compose Runtime 接入、更新、回调与所有权管理。应用使用这一依赖。 |
 | [`swiftui-bridge`](swiftui-bridge/) | 原生互操作、SwiftUI 宿主、资源管理与内嵌的 Swift 静态库。 |
-| [`swiftui-codegen`](swiftui-codegen/) | 根据组件白名单和有类型语义模型，在构建期生成绑定。 |
+| [`swiftui-codegen`](swiftui-codegen/) | 根据组件白名单和有类型语义模型，在构建期生成绑定；作为仓库工具，不发布到 Maven。 |
 | [`samples`](samples/) | 独立 Kotlin UI 示例与 macOS 测试宿主。 |
 
 Kotlin 选择界面结构及参数，Swift 转发官方 API 调用，不包含应用页面或业务状态。绘制路径使用 Compose Runtime，没有 Skia 绘制宿主。

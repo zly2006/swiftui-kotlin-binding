@@ -6,7 +6,7 @@
 
 Compose syntax. Kotlin state. Apple-rendered controls.
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/) [![Compose Runtime](https://img.shields.io/badge/Compose_Runtime-1.11.1-4285F4)](https://www.jetbrains.com/compose-multiplatform/) [![Platform](https://img.shields.io/badge/platform-macOS_arm64-111111?logo=apple)](#support) [![License](https://img.shields.io/badge/license-GPL_v3-blue)](LICENSE) [![Maven Central](https://img.shields.io/badge/Maven_Central-pending_namespace-d97706)](docs/releasing.md)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/) [![Compose Runtime](https://img.shields.io/badge/Compose_Runtime-1.11.1-4285F4)](https://www.jetbrains.com/compose-multiplatform/) [![Platform](https://img.shields.io/badge/platform-macOS_arm64-111111?logo=apple)](#support) [![License](https://img.shields.io/badge/license-GPL_v3-blue)](LICENSE) [![Maven Central](https://img.shields.io/badge/Maven_Central-publication_paused-d97706)](docs/releasing.md)
 
 **English** · [简体中文](README.zh-CN.md)
 
@@ -57,7 +57,7 @@ For CapyTimer, use `:samples:capytimer:linkDebugExecutableMacosArm64` and `CapyT
 
 ### Add it to your Kotlin project
 
-Maven Central publication is pending namespace authorization. The prepared coordinates below will become available after publication; meanwhile, run the samples from source.
+Maven Central publication is paused. The corrected coordinates below are prepared for the next publication; meanwhile, run the samples from source.
 
 Use Kotlin **2.4.0**, the Kotlin Compose compiler plugin, and a `macosArm64()` target. Add Maven Central and the public runtime dependency:
 
@@ -67,7 +67,7 @@ repositories { mavenCentral() }
 kotlin {
     macosArm64()
     sourceSets.commonMain.dependencies {
-        implementation("me.zly2006:swiftui-compose:0.1.0")
+        implementation("me.zly2006.swiftui:swiftui-compose:0.1.0")
     }
 }
 ```
@@ -108,7 +108,7 @@ Official SwiftUI → one native window host
 | --- | --- |
 | [`swiftui-compose`](swiftui-compose/) | Public Kotlin Composables, Compose Runtime integration, updates, callbacks, and ownership. This is the dependency applications use. |
 | [`swiftui-bridge`](swiftui-bridge/) | Native interoperability, SwiftUI hosting, resource management, and the embedded Swift static library. |
-| [`swiftui-codegen`](swiftui-codegen/) | Build-time generation from the reviewed component whitelist and typed semantic model. |
+| [`swiftui-codegen`](swiftui-codegen/) | Repository build tool for generation from the component whitelist and typed semantic model; not published to Maven. |
 | [`samples`](samples/) | Independent Kotlin UI examples and macOS test hosts. |
 
 Kotlin chooses the UI and its parameters. Swift forwards official API calls; it contains no application pages or business state. The rendering path uses Compose Runtime, with no Skia drawing host.

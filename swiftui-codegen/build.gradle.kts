@@ -1,7 +1,6 @@
 plugins {
     kotlin("jvm")
     application
-    id("com.vanniktech.maven.publish")
 }
 dependencies {
     testImplementation(kotlin("test"))
