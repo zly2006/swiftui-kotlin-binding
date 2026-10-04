@@ -6,7 +6,7 @@
 
 Compose syntax. Kotlin state. Apple-rendered controls.
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/) [![Compose Runtime](https://img.shields.io/badge/Compose_Runtime-1.11.1-4285F4)](https://www.jetbrains.com/compose-multiplatform/) [![Platform](https://img.shields.io/badge/platform-macOS_arm64-111111?logo=apple)](#support) [![License](https://img.shields.io/badge/license-GPL_v3-blue)](LICENSE) [![Maven Central](https://img.shields.io/badge/Maven_Central-publication_paused-d97706)](docs/releasing.md)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/) [![Compose Runtime](https://img.shields.io/badge/Compose_Runtime-1.11.1-4285F4)](https://www.jetbrains.com/compose-multiplatform/) [![Platform](https://img.shields.io/badge/platform-macOS_arm64-111111?logo=apple)](#support) [![License](https://img.shields.io/badge/license-GPL_v3-blue)](LICENSE) [![Maven Central](https://img.shields.io/badge/Maven_Central-0.1.0-2b6cb0)](https://central.sonatype.com/artifact/me.zly2006.swiftui/swiftui-compose/0.1.0)
 
 **English** · [简体中文](README.zh-CN.md)
 
@@ -57,7 +57,7 @@ For CapyTimer, use `:samples:capytimer:linkDebugExecutableMacosArm64` and `CapyT
 
 ### Add it to your Kotlin project
 
-Maven Central publication is paused. The corrected coordinates below are prepared for the next publication; meanwhile, run the samples from source.
+Version **0.1.0** is available from Maven Central. Applications use `swiftui-compose`; the native bridge resolves transitively.
 
 Use Kotlin **2.4.0**, the Kotlin Compose compiler plugin, and a `macosArm64()` target. Add Maven Central and the public runtime dependency:
 
@@ -121,14 +121,12 @@ The JVM target supports public API compilation and runtime tests; it does not re
 
 ## Documentation
 
-- [Getting started](docs/getting-started.md) — consume the release and open a native window.
-- [Architecture](docs/architecture.md) — Kotlin/Swift responsibilities and module boundaries.
-- [Component whitelist](docs/component-whitelist.md) — selected capabilities and planned additions.
-- [Code generation](docs/code-generation.md) — how bindings are produced.
-- [Native verification](docs/native-verification.md) — build, lifecycle, and runtime evidence.
-- [Releasing](docs/releasing.md) — publication and independent consumer checks.
+- [Getting started](docs/getting-started.md) — configure a project and open a native window.
+- [Architecture](docs/architecture.md) — the Kotlin/Swift boundary and native view tree.
+- [Extending the bindings](docs/code-generation.md) — add a native capability.
+- [Project goal](docs/project-goal.md) — future capability and performance work.
 
-The architecture and maintenance notes are currently in Simplified Chinese. Contributions that improve API coverage, native behavior, or documentation are welcome. New bindings must follow the [project constraints](AGENTS.md), and changes should pass the generator and Compose runtime tests:
+Contributions to API coverage, native behavior, and documentation are welcome. Follow the [project constraints](AGENTS.md) and run:
 
 ```sh
 ./gradlew :swiftui-codegen:test :swiftui-compose:jvmTest

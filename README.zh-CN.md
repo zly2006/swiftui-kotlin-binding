@@ -6,7 +6,7 @@
 
 使用 Compose 语法，由 Kotlin 管理状态，让 Apple 原生控件完成绘制。
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/) [![Compose Runtime](https://img.shields.io/badge/Compose_Runtime-1.11.1-4285F4)](https://www.jetbrains.com/compose-multiplatform/) [![Platform](https://img.shields.io/badge/platform-macOS_arm64-111111?logo=apple)](#支持范围) [![License](https://img.shields.io/badge/license-GPL_v3-blue)](LICENSE) [![Maven Central](https://img.shields.io/badge/Maven_Central-publication_paused-d97706)](docs/releasing.md)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/) [![Compose Runtime](https://img.shields.io/badge/Compose_Runtime-1.11.1-4285F4)](https://www.jetbrains.com/compose-multiplatform/) [![Platform](https://img.shields.io/badge/platform-macOS_arm64-111111?logo=apple)](#支持范围) [![License](https://img.shields.io/badge/license-GPL_v3-blue)](LICENSE) [![Maven Central](https://img.shields.io/badge/Maven_Central-0.1.0-2b6cb0)](https://central.sonatype.com/artifact/me.zly2006.swiftui/swiftui-compose/0.1.0)
 
 [English](README.md) · **简体中文**
 
@@ -57,7 +57,7 @@ export JAVA_HOME="$(/usr/libexec/java_home -v 21 -a arm64)"
 
 ### 添加到 Kotlin 项目
 
-Maven Central 发布已暂停。以下是为下一次发布准备的正确坐标，当前可先通过源码运行示例。
+**0.1.0** 已发布到 Maven Central。应用只需添加 `swiftui-compose`，原生桥会自动作为传递依赖解析。
 
 使用 Kotlin **2.4.0**、Kotlin Compose 编译器插件和 `macosArm64()` target。添加 Maven Central 与公共运行库依赖：
 
@@ -121,14 +121,12 @@ JVM target 用于公共 API 编译和运行时测试，不提供 Apple UI 绘制
 
 ## 文档
 
-- [入门指南](docs/getting-started.md)：添加发布版依赖并打开原生窗口。
-- [架构边界](docs/architecture.md)：Kotlin、Swift 与模块的责任归属。
-- [组件白名单](docs/component-whitelist.md)：已选择的能力与后续补充范围。
-- [代码生成](docs/code-generation.md)：绑定的生成方式。
-- [原生验证](docs/native-verification.md)：构建、生命周期和运行时证据。
-- [发布流程](docs/releasing.md)：发布与独立消费项目检查。
+- [入门指南](docs/getting-started.md)：配置项目并打开原生窗口。
+- [架构](docs/architecture.md)：Kotlin、Swift 的责任边界与原生视图树。
+- [扩展绑定](docs/code-generation.md)：增加原生能力。
+- [项目目标](docs/project-goal.md)：后续能力与性能工作。
 
-欢迎补充 API、改进原生行为与完善文档。新增绑定应遵循 [项目约束](AGENTS.md)，修改后运行生成器和 Compose 接入测试：
+欢迎补充 API、改进原生行为与完善文档。修改应遵循 [项目约束](AGENTS.md)，并运行：
 
 ```sh
 ./gradlew :swiftui-codegen:test :swiftui-compose:jvmTest

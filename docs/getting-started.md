@@ -1,6 +1,6 @@
 # Getting started
 
-Build a native macOS interface with Kotlin Composables and the runtime artifact.
+Build a native macOS interface with Kotlin Composables and `me.zly2006.swiftui:swiftui-compose:0.1.0` from Maven Central.
 
 ## Requirements
 
@@ -118,4 +118,4 @@ Build with `gradle linkDebugExecutableMacosArm64`, then run `build/bin/macosArm6
 
 ## Support
 
-This is an early macOS arm64 release. The [component whitelist](component-whitelist.md) records supported bindings and pending capabilities. JVM artifacts support common API compilation and tests, not Apple UI rendering.
+This is an early macOS arm64 release. The [component whitelist](../swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Whitelist.kt) records supported bindings and pending capabilities. JVM artifacts support common API compilation and tests, not Apple UI rendering.
