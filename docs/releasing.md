@@ -31,7 +31,7 @@ The build uses the [Vanniktech Maven Publish plugin](https://vanniktech.github.i
   :swiftui-compose:publishToMavenCentral -PallowCentralUpload=true
 ```
 
-Use an empty Central staging directory; archive outputs from previous groups before staging a new release. After upload, verify the staged group, module list, version, signatures, and consumer behavior before explicitly releasing the validated deployment. Commit and tag the exact source used by the release. Upload only after the local gate passes. Maven Central versions are immutable: a correction requires a new version. The final gate is to download the public artifacts and build the standalone consumer without `bindingRepository`, not merely to finish an upload task.
+Use an empty Central staging directory; archive outputs from previous groups before staging a new release. After upload, verify the staged group, module list, version, signatures, and consumer behavior before explicitly releasing the validated deployment. Commit the exact release source and tag it as `swiftui-v<version>`. The older `v0.1.0` tag remains the source reference for the accidental parent-group publication. Upload only after the local gate passes. Maven Central versions are immutable: a correction requires a new version. The final gate is to download the public artifacts and build the standalone consumer without `bindingRepository`, not merely to finish an upload task.
 
 The library POM declares GPL-3.0-only. Upstream sample MIT notices remain in their own directories and do not change the library's declared license.
 

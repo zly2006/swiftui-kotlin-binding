@@ -68,7 +68,7 @@ subprojects {
                     url.set("https://github.com/zly2006/swiftui-kotlin-binding")
                     connection.set("scm:git:https://github.com/zly2006/swiftui-kotlin-binding.git")
                     developerConnection.set("scm:git:ssh://git@github.com/zly2006/swiftui-kotlin-binding.git")
-                    tag.set("v${project.version}")
+                    tag.set("swiftui-v${project.version}")
                 }
             }
         }
