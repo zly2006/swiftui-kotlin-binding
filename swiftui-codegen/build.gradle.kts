@@ -1,4 +1,7 @@
-plugins { kotlin("jvm"); application }
+plugins {
+    kotlin("jvm")
+    application
+}
 dependencies {
     testImplementation(kotlin("test"))
 }

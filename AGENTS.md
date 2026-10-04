@@ -4,6 +4,7 @@
 - 最终目标与验收以 `docs/project-goal.md` 为准。少量控件、示例窗口或单页复刻不能作为完成依据。
 - Kotlin、Swift 和模块的责任边界以 `docs/architecture.md` 的“语言责任边界”和“模块依赖边界”为准；修改边界必须先更新该文档，再调整实现。
 - 当前模块清单及依赖以 `docs/modules.md` 为准；不得恢复已经停用的 Skia 混合宿主或重复手写组件桥。
+- 所有模块、所有 Kotlin source set（含测试和自定义源码目录）及 Gradle Kotlin 脚本必须纳入 ktlint；仅排除 `docs/code-generation.md` 指定的 codegen 产物，生成器自身源码不得排除。格式规则以 `.editorconfig` 为准；`componentWhitelist`、`Model.kt` 和 `MacosNativeRuntime.kt` 的声明正文，以及 generator 包内格式化后行数超过原来 1.5 倍的区块必须保留 `@formatter:off/on`，这些区段禁止自动格式化和检查。提交前必须运行 `./gradlew ktlintFormat`，检查格式化修改，再运行 `./gradlew ktlintCheck` 并确认通过。
 - UI 声明、布局意图、视觉参数、状态、行为和 Compose 接入必须由 Kotlin 实现。组件实际绘制使用官方原生 API；禁止手写外观复刻。
 - Swift 只允许绑定官方 SwiftUI 能力以及实现必要的宿主、ABI 转换和资源管理；禁止编写应用页面、业务状态、布局算法、设计参数或自绘组件。
 - 重复绑定必须按 `docs/code-generation.md` 从同一有类型模型生成。每项原生操作对应强类型 Kotlin API 和独立接口；禁止运行时 JSON 页面、组件树传输协议、字符串命令解释器和 Swift 页面渲染器。句柄必须在主线程更新和释放。

@@ -1,8 +1,14 @@
 package me.zly2006.swiftui.generator
 
 import java.nio.file.Files
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
+// @formatter:off
 class WhitelistTest {
     @Test fun unlistedDefinitionDoesNotExportAnApi() {
         val privateCandidate = Binding("UnreviewedControl", emptyList(), body = "SwiftUI.EmptyView()", references = emptyList())
@@ -25,3 +31,4 @@ class WhitelistTest {
         } finally { first.deleteRecursively(); second.deleteRecursively() }
     }
 }
+// @formatter:on

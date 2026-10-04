@@ -1,7 +1,16 @@
-plugins { kotlin("multiplatform"); kotlin("plugin.compose"); id("org.jetbrains.compose") }
+plugins {
+    kotlin("multiplatform")
+    kotlin("plugin.compose")
+    id("org.jetbrains.compose")
+}
 val generated = rootProject.layout.buildDirectory.dir("generated/native-ui")
 kotlin {
-    macosArm64 { binaries.all { freeCompilerArgs += listOf("-Xoverride-konan-properties=ignoreXcodeVersionCheck=true", "-Xpartial-linkage-loglevel=error") } }
+    macosArm64 {
+        binaries.all {
+            freeCompilerArgs +=
+                listOf("-Xoverride-konan-properties=ignoreXcodeVersionCheck=true", "-Xpartial-linkage-loglevel=error")
+        }
+    }
     jvm()
     sourceSets {
         commonMain {

@@ -1,7 +1,30 @@
 package me.zly2006.swiftui.samples.nativeui
 
-import androidx.compose.runtime.*
-import me.zly2006.swiftui.nativeui.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import me.zly2006.swiftui.nativeui.Alignment
+import me.zly2006.swiftui.nativeui.Button
+import me.zly2006.swiftui.nativeui.Column
+import me.zly2006.swiftui.nativeui.FontWeight
+import me.zly2006.swiftui.nativeui.HorizontalAlignment
+import me.zly2006.swiftui.nativeui.Material
+import me.zly2006.swiftui.nativeui.MaterialSurface
+import me.zly2006.swiftui.nativeui.NativeColor
+import me.zly2006.swiftui.nativeui.NativeModifier
+import me.zly2006.swiftui.nativeui.ProgressView
+import me.zly2006.swiftui.nativeui.Row
+import me.zly2006.swiftui.nativeui.Slider
+import me.zly2006.swiftui.nativeui.SystemImage
+import me.zly2006.swiftui.nativeui.Text
+import me.zly2006.swiftui.nativeui.TextField
+import me.zly2006.swiftui.nativeui.Toggle
+import me.zly2006.swiftui.nativeui.flexibleFrame
+import me.zly2006.swiftui.nativeui.font
+import me.zly2006.swiftui.nativeui.foreground
+import me.zly2006.swiftui.nativeui.frame
+import me.zly2006.swiftui.nativeui.padding
 
 class NativeShowcaseState {
     var updates by mutableStateOf(0)
@@ -13,8 +36,19 @@ class NativeShowcaseState {
 
 @Composable
 fun NativeShowcase(state: NativeShowcaseState) {
-    Column(spacing = 18.0, alignment = HorizontalAlignment.Leading,
-        modifier = NativeModifier.padding(32.0).flexibleFrame(maxWidth = Double.POSITIVE_INFINITY, maxHeight = Double.POSITIVE_INFINITY, alignment = Alignment.TopLeading)) {
+    Column(
+        spacing = 18.0,
+        alignment = HorizontalAlignment.Leading,
+        modifier =
+            NativeModifier
+                .padding(
+                    32.0,
+                ).flexibleFrame(
+                    maxWidth = Double.POSITIVE_INFINITY,
+                    maxHeight = Double.POSITIVE_INFINITY,
+                    alignment = Alignment.TopLeading,
+                ),
+    ) {
         Text("SwiftUI Kotlin Binding", NativeModifier.font(30.0, FontWeight.Bold))
         Text("Compose Runtime → 有类型绑定 → 官方原生 UI", NativeModifier.font(15.0).foreground(NativeColor.Secondary))
         Row(spacing = 12.0) {
@@ -23,7 +57,12 @@ fun NativeShowcase(state: NativeShowcaseState) {
         }
         if (state.visible) {
             Toggle(checked = state.checked, onCheckedChanged = { state.checked = it }) { Text("原生 Toggle") }
-            TextField(text = state.text, prompt = "输入文字", onTextChanged = { state.text = it }, modifier = NativeModifier.frame(width = 300.0))
+            TextField(
+                text = state.text,
+                prompt = "输入文字",
+                onTextChanged = { state.text = it },
+                modifier = NativeModifier.frame(width = 300.0),
+            )
             Slider(value = state.value, onValueChanged = { state.value = it }, modifier = NativeModifier.frame(width = 300.0))
             ProgressView(state.value, modifier = NativeModifier.frame(width = 300.0))
             Row(spacing = 24.0) {

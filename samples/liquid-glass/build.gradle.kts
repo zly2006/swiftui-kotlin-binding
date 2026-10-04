@@ -1,4 +1,8 @@
-plugins { kotlin("multiplatform"); kotlin("plugin.compose"); id("org.jetbrains.compose") }
+plugins {
+    kotlin("multiplatform")
+    kotlin("plugin.compose")
+    id("org.jetbrains.compose")
+}
 val swiftDir = project(":swiftui-bridge").layout.buildDirectory.dir("swift")
 kotlin {
     macosArm64 {
@@ -6,7 +10,12 @@ kotlin {
             baseName = "LiquidGlassMock"
             entryPoint = "me.zly2006.swiftui.samples.liquidglass.main"
             freeCompilerArgs += listOf("-Xoverride-konan-properties=ignoreXcodeVersionCheck=true", "-Xpartial-linkage-loglevel=error")
-            linkerOpts("-L${swiftDir.get().asFile}", "-lSwiftUIBinding", "-Wl,-rpath,${swiftDir.get().asFile}", "-Wl,-rpath,@executable_path/../Frameworks")
+            linkerOpts(
+                "-L${swiftDir.get().asFile}",
+                "-lSwiftUIBinding",
+                "-Wl,-rpath,${swiftDir.get().asFile}",
+                "-Wl,-rpath,@executable_path/../Frameworks",
+            )
         }
     }
     jvm()

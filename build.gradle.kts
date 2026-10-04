@@ -1,3 +1,5 @@
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
+
 plugins {
     kotlin("multiplatform") version "2.4.0" apply false
     kotlin("jvm") version "2.4.0" apply false
@@ -8,4 +10,13 @@ plugins {
 allprojects {
     group = "me.zly2006"
     version = "0.1.0-SNAPSHOT"
+
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+
+    configure<KtlintExtension> {
+        filter {
+            val generatedBindings = rootProject.layout.buildDirectory.dir("generated/native-ui")
+            exclude { it.file.toPath().startsWith(generatedBindings.get().asFile.toPath()) }
+        }
+    }
 }

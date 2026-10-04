@@ -1,12 +1,13 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package me.zly2006.swiftui.nativeui
 
-import platform.AppKit.NSToolbarItem
-import platform.AppKit.NSWindow
-import platform.AppKit.NSView
-import platform.AppKit.NSScrollView
-import platform.Foundation.NSMakePoint
 import kotlinx.cinterop.useContents
+import platform.AppKit.NSScrollView
+import platform.AppKit.NSToolbarItem
+import platform.AppKit.NSView
+import platform.AppKit.NSWindow
+import platform.Foundation.NSMakePoint
 
 /** SwiftUI may reinstall the native item during layout; callers can apply this on window updates. */
 fun NSWindow.hideSidebarToggle() {
@@ -24,6 +25,7 @@ fun NSView.scrollVertically(offset: Double): Boolean {
     checkNativeUiMainThread()
     require(offset.isFinite() && offset >= 0)
     val candidates = mutableListOf<NSScrollView>()
+
     fun visit(view: NSView) {
         if (view is NSScrollView) {
             val documentHeight = view.documentView?.bounds?.useContents { size.height } ?: 0.0

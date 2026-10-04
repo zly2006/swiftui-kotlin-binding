@@ -1,4 +1,8 @@
-plugins { kotlin("multiplatform"); kotlin("plugin.compose"); id("org.jetbrains.compose") }
+plugins {
+    kotlin("multiplatform")
+    kotlin("plugin.compose")
+    id("org.jetbrains.compose")
+}
 kotlin {
     macosArm64()
     jvm()
@@ -7,5 +11,8 @@ kotlin {
 
 val localUi = rootProject.file("local-fixtures/ui")
 if (localUi.isDirectory) {
-    kotlin.sourceSets.getByName("commonMain").kotlin.srcDir(localUi)
+    kotlin.sourceSets
+        .getByName("commonMain")
+        .kotlin
+        .srcDir(localUi)
 }

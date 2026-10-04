@@ -1,11 +1,30 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+
 package me.zly2006.swiftui.nativeui
 
-import kotlinx.cinterop.*
-import me.zly2006.swiftui.capi.*
+import kotlinx.cinterop.COpaquePointer
+import kotlinx.cinterop.StableRef
+import kotlinx.cinterop.interpretObjCPointer
+import kotlinx.cinterop.rawValue
+import me.zly2006.swiftui.capi.sui_node_clear
+import me.zly2006.swiftui.capi.sui_node_debug_action
+import me.zly2006.swiftui.capi.sui_node_debug_boolean
+import me.zly2006.swiftui.capi.sui_node_debug_double
+import me.zly2006.swiftui.capi.sui_node_debug_string
+import me.zly2006.swiftui.capi.sui_node_insert
+import me.zly2006.swiftui.capi.sui_node_move
+import me.zly2006.swiftui.capi.sui_node_release
+import me.zly2006.swiftui.capi.sui_node_remove
+import me.zly2006.swiftui.capi.sui_tree_body_evaluations
+import me.zly2006.swiftui.capi.sui_tree_host_create
+import me.zly2006.swiftui.capi.sui_tree_host_release
+import me.zly2006.swiftui.capi.sui_tree_live_hosts
+import me.zly2006.swiftui.capi.sui_tree_live_nodes
+import me.zly2006.swiftui.capi.sui_tree_property_updates
 import platform.AppKit.NSView
 import platform.Foundation.NSThread
 
+// @formatter:off
 internal fun checkNativeUiMainThread() = check(NSThread.isMainThread) { "Native UI requires the main thread" }
 internal class NativeCallback(val invoke: (Any) -> Unit)
 private class MacosElement(val owner: BaseMacosNativeUiBackend, val kind: String, var pointer: COpaquePointer?, val callback: StableRef<NativeCallback>?) : NativeUiElement
@@ -63,3 +82,4 @@ fun nativeNodeCount(): Int { checkNativeUiMainThread(); return sui_tree_live_nod
 fun nativeHostCount(): Int { checkNativeUiMainThread(); return sui_tree_live_hosts() }
 fun nativePropertyUpdates(): Long { checkNativeUiMainThread(); return sui_tree_property_updates() }
 fun nativeBodyEvaluations(): Long { checkNativeUiMainThread(); return sui_tree_body_evaluations() }
+// @formatter:on

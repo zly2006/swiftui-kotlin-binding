@@ -1,5 +1,7 @@
 package me.zly2006.swiftui.generator
 
+// @formatter:off
+
 /** Build-time semantic mappings. Runtime calls are generated individual C functions. */
 sealed interface ValueType {
     data object Text : ValueType
@@ -146,3 +148,4 @@ val adapterDefinitions = listOf(
     Binding("AccessibilityLabel", listOf(f("text", string)), Children.One, "NativeChildren(node: node).accessibilityLabel(c.text)", ui("View", "accessibilityLabel"), modifier = "accessibilityLabel"),
     Binding("Disabled", listOf(f("disabled", bool)), Children.One, "NativeChildren(node: node).disabled(c.disabled)", core("View", "disabled"), modifier = "disabled"),
 )
+// @formatter:on

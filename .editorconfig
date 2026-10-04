@@ -1,0 +1,13 @@
+root = true
+
+[*.{kt,kts}]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+ij_formatter_tags_enabled = true
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Generated source templates must preserve the emitted code and its line breaks.
+[swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Emitter.kt]
+max_line_length = off
