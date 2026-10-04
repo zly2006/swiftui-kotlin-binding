@@ -12,3 +12,6 @@ local.properties
 
 # Local comparison evidence is separate from the sample showcases.
 /samples/*/verification.json
+
+# Independent release-consumer validation stays local.
+/tests/maven-consumer/

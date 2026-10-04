@@ -2,8 +2,15 @@ plugins {
     kotlin("multiplatform")
     kotlin("plugin.compose")
     id("org.jetbrains.compose")
+    id("com.vanniktech.maven.publish")
 }
-val generated = rootProject.layout.buildDirectory.dir("generated/native-ui")
+evaluationDependsOn(":swiftui-codegen")
+val generated =
+    project(":swiftui-codegen").tasks.named("generateBindings").map {
+        rootProject.layout.buildDirectory
+            .dir("generated/native-ui")
+            .get()
+    }
 kotlin {
     macosArm64 {
         binaries.all {
@@ -28,4 +35,3 @@ kotlin {
         jvmTest.dependencies { implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0") }
     }
 }
-tasks.matching { it.name.startsWith("compileKotlin") }.configureEach { dependsOn(":swiftui-codegen:generateBindings") }
