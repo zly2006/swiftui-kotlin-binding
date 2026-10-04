@@ -4,4 +4,4 @@ plugins {
 }
 dependencyResolutionManagement { repositories { mavenCentral(); google() } }
 rootProject.name = "swiftui-kotlin-binding"
-include(":binding-generator", ":binding-core", ":native-compose", ":samples:demo-ui", ":samples:native-macos")
+include(":swiftui-codegen", ":swiftui-bridge", ":swiftui-compose", ":samples:demo-ui", ":samples:native-macos")

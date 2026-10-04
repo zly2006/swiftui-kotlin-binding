@@ -2,7 +2,7 @@
 
 白名单先覆盖常用 UI 的组件、容器和必要效果，再用真实应用补齐遗漏。它不是 SDK 符号清单，不要求导出每个函数、构造重载、协议、辅助类型或系统扩展。完整 UI 能力通过必要的原生调用与组合实现。
 
-可执行白名单位于 `binding-generator/src/main/kotlin/me/zly2006/swiftui/generator/Whitelist.kt`。语义适配定义位于同目录的 `Model.kt`。只有同时列入白名单且有适配定义的绑定才能生成；仅添加适配定义不会自动导出。内部根节点属于运行时，不计为用户控件。
+可执行白名单位于 `swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Whitelist.kt`。语义适配定义位于同目录的 `Model.kt`。只有同时列入白名单且有适配定义的绑定才能生成；仅添加适配定义不会自动导出。内部根节点属于运行时，不计为用户控件。
 
 ## 第一批关键组件
 

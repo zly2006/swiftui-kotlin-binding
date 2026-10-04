@@ -2,7 +2,7 @@ plugins { kotlin("multiplatform"); kotlin("plugin.compose"); id("org.jetbrains.c
 kotlin {
     macosArm64()
     jvm()
-    sourceSets.commonMain.dependencies { implementation(project(":native-compose")) }
+    sourceSets.commonMain.dependencies { implementation(project(":swiftui-compose")) }
 }
 
 val localUi = rootProject.file("local-fixtures/ui")

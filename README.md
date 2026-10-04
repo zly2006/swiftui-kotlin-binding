@@ -8,9 +8,9 @@ Kotlin 负责 UI 声明、布局意图、视觉参数、状态和行为；Swift 
 
 项目保留三个库模块和两个测试模块，职责与依赖见 [modules.md](docs/modules.md)。旧 Skia 混合宿主和四类手写绑定已移除。
 
-- `binding-generator`：白名单与语义模型的构建期生成器。
-- `binding-core`：SwiftUI 原生宿主、必要语义适配、动态库和 C ABI。
-- `native-compose`：公共 Kotlin Composable API 与 Compose Runtime 接入。
+- `swiftui-codegen`：白名单与语义模型的构建期生成器。
+- `swiftui-bridge`：SwiftUI 原生宿主、必要语义适配、动态库和 C ABI。
+- `swiftui-compose`：公共 Kotlin Composable API 与 Compose Runtime 接入。
 - `samples:demo-ui`：纯 Kotlin 测试 UI；外部应用样本仅本地保留。
 - `samples:native-macos`：macOS 窗口、应用生命周期和打包测试入口。
 
@@ -20,7 +20,7 @@ macOS、Xcode 与 arm64 JDK 21 环境下：
 
 ```sh
 export JAVA_HOME="$(/usr/libexec/java_home -v 21 -a arm64)"
-./gradlew :binding-generator:test :native-compose:jvmTest :samples:native-macos:linkDebugExecutableMacosArm64
+./gradlew :swiftui-codegen:test :swiftui-compose:jvmTest :samples:native-macos:linkDebugExecutableMacosArm64
 ```
 
 本地打包和自身窗口验证使用 `scripts/build-native.sh` 与 `scripts/verify-native.sh`。外部应用的源码、资源、参考图片及应用包不提交，测试样本不属于公开库依赖。

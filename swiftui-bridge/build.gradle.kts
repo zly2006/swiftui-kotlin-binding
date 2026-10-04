@@ -2,7 +2,7 @@ plugins { kotlin("multiplatform") }
 val swiftOutput = layout.buildDirectory.dir("swift")
 val nativeGenerated = rootProject.layout.buildDirectory.dir("generated/native-ui")
 val compileSwift by tasks.registering(Exec::class) {
-    dependsOn(":binding-generator:generateBindings")
+    dependsOn(":swiftui-codegen:generateBindings")
     inputs.files("src/swift/NativeTreeRuntime.swift", nativeGenerated.map { it.file("swift/GeneratedNativeUI.swift") })
     outputs.file(swiftOutput.map { it.file("libSwiftUIBinding.dylib") })
     doFirst { swiftOutput.get().asFile.mkdirs() }
@@ -21,7 +21,7 @@ kotlin {
     }
 }
 tasks.matching { it.name.startsWith("cinterop") }.configureEach {
-    dependsOn(":binding-generator:generateBindings")
+    dependsOn(":swiftui-codegen:generateBindings")
     inputs.file(nativeGenerated.map { it.file("include/NativeUI.h") })
 }
 tasks.matching { it.name.startsWith("link") }.configureEach { dependsOn(compileSwift) }

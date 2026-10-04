@@ -4,7 +4,7 @@
 
 ## 选择必要能力
 
-先判断原生组件及其组合能否满足 UI 需求，再选择缺失的必要调用。白名单在 `binding-generator/src/main/kotlin/me/zly2006/swiftui/generator/Whitelist.kt` 中定义。常用组件、布局、输入、导航和效果按类别登记；尚未实现的需求明确保留，不能因为生成器只支持一部分就从完成标准中消失。
+先判断原生组件及其组合能否满足 UI 需求，再选择缺失的必要调用。白名单在 `swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Whitelist.kt` 中定义。常用组件、布局、输入、导航和效果按类别登记；尚未实现的需求明确保留，不能因为生成器只支持一部分就从完成标准中消失。
 
 只针对所选接口查看官方文档、本机 SDK 声明和 availability，最后由 Swift 编译器核对调用。该过程没有 symbol graph 全量导出或全 SDK 审计任务。
 
@@ -21,8 +21,8 @@
 ## 生成和验证
 
 ```sh
-./gradlew :binding-generator:showWhitelist
-./gradlew :binding-generator:generateBindings
+./gradlew :swiftui-codegen:showWhitelist
+./gradlew :swiftui-codegen:generateBindings
 ```
 
 产物位于 `build/generated/native-ui/`，包括接口源码、选中组件清单、绑定清单和待补能力清单。构建任务自动生成后再编译 Swift、cinterop 和 Kotlin；不要求用户手写或同步跨语言重复代码。

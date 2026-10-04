@@ -13,10 +13,10 @@ kotlin {
         }
         macosMain {
             kotlin.srcDir(generated.map { it.dir("macos") })
-            dependencies { implementation(project(":binding-core")) }
+            dependencies { implementation(project(":swiftui-bridge")) }
         }
         commonTest.dependencies { implementation(kotlin("test")) }
         jvmTest.dependencies { implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0") }
     }
 }
-tasks.matching { it.name.startsWith("compileKotlin") }.configureEach { dependsOn(":binding-generator:generateBindings") }
+tasks.matching { it.name.startsWith("compileKotlin") }.configureEach { dependsOn(":swiftui-codegen:generateBindings") }

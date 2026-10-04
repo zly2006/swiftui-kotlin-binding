@@ -46,6 +46,6 @@ libSwiftUIBinding.dylib: a8704c76f81181fa70fc731ce5c2d6591327b6862f797da09ecf08b
 
 ## 代码清理后的验证
 
-停用的 Skia 混合模块、旧示例、四类手写组件桥与其测试已经移除。`binding-core` 现在只提供 macOS C 互操作与 Swift 原生桥；`native-compose` 的公共部分和 JVM 测试不再依赖它。当前模块职责见 [modules.md](modules.md)。
+停用的 Skia 混合模块、旧示例、四类手写组件桥与其测试已经移除。`swiftui-bridge` 现在只提供 macOS C 互操作与 Swift 原生桥；`swiftui-compose` 的公共部分和 JVM 测试不再依赖它。当前模块职责见 [modules.md](modules.md)。
 
 清理后重新运行了 3 项生成器测试、2 项 Compose Runtime 接入测试、纯 Kotlin UI 的 JVM 编译和 macOS 可执行文件链接，全部通过。使用新编译的可执行文件采集本任务窗口后，1272×600 的首页与保留参考图逐像素一致。该检查仅用于确认清理没有改变已验证画面，不扩大其他状态的验收结论，也没有改写用户正在运行的应用包。
