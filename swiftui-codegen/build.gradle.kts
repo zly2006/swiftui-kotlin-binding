@@ -4,6 +4,7 @@ plugins {
 }
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0")
 }
 application { mainClass.set("me.zly2006.swiftui.generator.MainKt") }
 val generatedDir = rootProject.layout.buildDirectory.dir("generated/native-ui")

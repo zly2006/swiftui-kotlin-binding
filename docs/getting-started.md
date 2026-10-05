@@ -1,12 +1,14 @@
 # Getting started
 
-Build a native macOS interface with Kotlin Composables and `me.zly2006.swiftui:swiftui-compose:0.1.0` from Maven Central.
+Build a native macOS interface with Kotlin Composables and the current source API (`0.2.0-SNAPSHOT`). Clone this repository and include it in your application build. For the published 0.1.0 API, use the [release guide](https://github.com/zly2006/swiftui-kotlin-binding/blob/swiftui-v0.1.0/docs/getting-started.md).
 
 ## Requirements
 
 Use an Apple Silicon Mac, a compatible Apple SDK/toolchain, Kotlin 2.4.0, and an arm64 JDK 21. The native bridge targets macOS 15 or later; the release was tested with Xcode 26 on macOS 26. Compose Runtime 1.11.1 resolves transitively.
 
 ## Configure a project
+
+The example expects the library checkout at `../swiftui-kotlin-binding`; adjust `includeBuild` to your checkout.
 
 Add this `settings.gradle.kts`:
 
@@ -18,6 +20,7 @@ dependencyResolutionManagement {
     repositories { mavenCentral(); google() }
 }
 rootProject.name = "native-counter"
+includeBuild("../swiftui-kotlin-binding")
 ```
 
 Use this `build.gradle.kts`:
@@ -36,7 +39,7 @@ kotlin {
         }
     }
     sourceSets.commonMain.dependencies {
-        implementation("me.zly2006.swiftui:swiftui-compose:0.1.0")
+        implementation("me.zly2006.swiftui:swiftui-compose:0.2.0-SNAPSHOT")
     }
 }
 ```
@@ -51,19 +54,20 @@ Create `src/commonMain/kotlin/example/Counter.kt`:
 package example
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import me.zly2006.swiftui.nativeui.*
 
 @Composable
 fun Counter() {
     var count by remember { mutableStateOf(0) }
-    Column(spacing = 12.0, modifier = NativeModifier.padding(24.0)) {
-        Text("Count: $count", NativeModifier.semanticFont(TextStyle.Headline))
+    Column(spacing = 12.0, modifier = Modifier.padding(24.0)) {
+        Text("Count: $count", Modifier.semanticFont(TextStyle.Headline))
         Button(onClick = { count++ }) { Text("Increment") }
     }
 }
 ```
 
-`Row`, `Column`, and `Box` call native stack containers. `Text`, `Button`, and `TextEditor` call official SwiftUI controls. Modifier order follows SwiftUI: padding before a background includes the padding in that background.
+`Row`, `Column`, and `Box` call native stack containers. `Text`, `Button`, and `TextEditor` call official SwiftUI controls. Controls accept `androidx.compose.ui.Modifier`. Native extensions use Compose chain order: `Modifier.background(NativeColor.Red).padding(12.0)` includes the padding in the background. Use native extension imports; unsupported Compose elements throw an exception that suggests alternatives. See [Architecture](architecture.md) for the modifier boundary.
 
 ## Open a native window
 

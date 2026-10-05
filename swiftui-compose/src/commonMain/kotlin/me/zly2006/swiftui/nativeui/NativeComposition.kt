@@ -19,21 +19,26 @@ import kotlinx.coroutines.yield
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.TimeSource
 
+/** Opaque element owned by a [NativeTreeBackend]; no platform handles are exposed in common UI code. */
 interface NativeUiElement
 
+/** Maintains an ordered native tree. Detach children before releasing their Kotlin ownership. */
 interface NativeTreeBackend {
+    /** Inserts [child] into [parent] at the zero-based [index]. The child must be detached. */
     fun insert(
         parent: NativeUiElement,
         child: NativeUiElement,
         index: Int,
     )
 
+    /** Detaches [count] consecutive children starting at [index]; their owner releases them separately. */
     fun remove(
         parent: NativeUiElement,
         index: Int,
         count: Int,
     )
 
+    /** Moves [count] siblings from [from] to [to], where [to] refers to the list before removal. */
     fun move(
         parent: NativeUiElement,
         from: Int,
@@ -41,8 +46,10 @@ interface NativeTreeBackend {
         count: Int,
     )
 
+    /** Detaches all children of [parent]; it does not release their separate ownership. */
     fun clear(parent: NativeUiElement)
 
+    /** Releases an unparented [element] owned by this backend; repeated release is safe. */
     fun release(element: NativeUiElement)
 }
 
@@ -106,7 +113,10 @@ internal class NativeUiApplier(
     }
 }
 
-/** Compose Runtime composition backed by official native nodes, with no drawing engine. */
+/** Compose Runtime composition backed by official native nodes.
+ * @property backend Backend owning all native elements created by this composition.
+ * @param coroutineContext Scheduling context; native Apple backends require the main thread.
+ */
 class NativeComposition(
     val backend: NativeUiBackend,
     coroutineContext: CoroutineContext = Dispatchers.Main,
@@ -118,10 +128,14 @@ class NativeComposition(
     private lateinit var frameClock: BroadcastFrameClock
     private val notifications = Channel<Unit>(Channel.CONFLATED)
     private val root = UiNode(backend, backend.createRoot(RootConfig))
+
+    /** Root to host in a native window; unavailable after this composition is closed. */
     val rootElement: NativeUiElement get() {
         check(!closed)
         return root.element
     }
+
+    /** Cumulative frame requests made by Compose; an unchanged UI does not continuously request frames. */
     val scheduledFrames: Long get() = frameRequests
     private val recomposer: Recomposer
     private val composition: Composition
@@ -143,11 +157,13 @@ class NativeComposition(
         scope.launch(frameClock) { recomposer.runRecomposeAndApplyChanges() }
     }
 
+    /** Installs or replaces the root composable content. Call on the backend's required thread. */
     fun setContent(content: @Composable () -> Unit) {
         check(!closed)
         composition.setContent { CompositionLocalProvider(LocalNativeUiBackend provides backend, content = content) }
     }
 
+    /** Disposes the composition and its owned tree, cancels scheduling, and unregisters snapshot observation. */
     override fun close() {
         if (closed) return
         closed = true
@@ -159,23 +175,3 @@ class NativeComposition(
         scope.cancel()
     }
 }
-
-/** A chain of generated official native modifier calls, applied in SwiftUI modifier order. */
-interface NativeModifier {
-    @Composable fun wrap(content: @Composable () -> Unit)
-
-    companion object : NativeModifier {
-        @Composable override fun wrap(content: @Composable () -> Unit) = content()
-    }
-}
-
-private class CombinedNativeModifier(
-    val previous: NativeModifier,
-    val next: @Composable (@Composable () -> Unit) -> Unit,
-) : NativeModifier {
-    @Composable override fun wrap(content: @Composable () -> Unit) {
-        next { previous.wrap(content) }
-    }
-}
-
-fun NativeModifier.then(block: @Composable (@Composable () -> Unit) -> Unit): NativeModifier = CombinedNativeModifier(this, block)

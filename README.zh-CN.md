@@ -57,9 +57,9 @@ export JAVA_HOME="$(/usr/libexec/java_home -v 21 -a arm64)"
 
 ### 添加到 Kotlin 项目
 
-**0.1.0** 已发布到 Maven Central。应用只需添加 `swiftui-compose`，原生桥会自动作为传递依赖解析。
+Maven Central 已发布 **0.1.0**，对应 API 请使用[发布版指南](https://github.com/zly2006/swiftui-kotlin-binding/blob/swiftui-v0.1.0/docs/getting-started.md)。以下示例使用当前源码 API（`0.2.0-SNAPSHOT`），控件参数统一采用 Compose `Modifier`。
 
-使用 Kotlin **2.4.0**、Kotlin Compose 编译器插件和 `macosArm64()` target。添加 Maven Central 与公共运行库依赖：
+克隆本仓库后，在应用的 `settings.gradle.kts` 中添加 `includeBuild("../swiftui-kotlin-binding")`，并根据实际检出位置调整路径。使用 Kotlin **2.4.0**、Kotlin Compose 编译器插件和 `macosArm64()` 目标，再添加运行库依赖：
 
 ```kotlin
 repositories { mavenCentral() }
@@ -67,7 +67,7 @@ repositories { mavenCentral() }
 kotlin {
     macosArm64()
     sourceSets.commonMain.dependencies {
-        implementation("me.zly2006.swiftui:swiftui-compose:0.1.0")
+        implementation("me.zly2006.swiftui:swiftui-compose:0.2.0-SNAPSHOT")
     }
 }
 ```
@@ -78,13 +78,14 @@ macOS 桥接模块和它包含的原生静态库会作为传递依赖解析。�
 
 ```kotlin
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import me.zly2006.swiftui.nativeui.*
 
 @Composable
 fun Counter() {
     var count by remember { mutableStateOf(0) }
-    Column(spacing = 12.0, modifier = NativeModifier.padding(24.0)) {
-        Text("Count: $count", NativeModifier.semanticFont(TextStyle.Headline))
+    Column(spacing = 12.0, modifier = Modifier.padding(24.0)) {
+        Text("Count: $count", Modifier.semanticFont(TextStyle.Headline))
         Button(onClick = { count++ }) { Text("Increment") }
     }
 }

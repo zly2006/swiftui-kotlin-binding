@@ -99,7 +99,10 @@ internal class BoundedResourceCache<K : Any, V : Any>(
     }
 }
 
-/** Limits retained geometry per backend; zero entries disables path caching. */
+/** Limits retained geometry per backend; zero entries disables path caching.
+ * @property maxEntries Maximum number of retained paths; zero disables retention.
+ * @property maxCommands Maximum total command count across retained paths.
+ */
 data class NativePathCacheLimits(
     val maxEntries: Int = 32,
     val maxCommands: Int = 2048,
@@ -109,6 +112,13 @@ data class NativePathCacheLimits(
     }
 }
 
+/** Snapshot of backend-owned path reuse and retention.
+ * @property hits Number of borrows that reused a retained native path.
+ * @property constructions Number of native paths built, including transient oversized paths.
+ * @property evictions Number of retained paths released to satisfy cache bounds.
+ * @property entries Number of paths currently retained by the cache.
+ * @property commands Total command count across currently retained paths.
+ */
 data class NativePathCacheStatistics(
     val hits: Long,
     val constructions: Long,

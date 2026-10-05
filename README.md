@@ -57,9 +57,11 @@ For CapyTimer, use `:samples:capytimer:linkDebugExecutableMacosArm64` and `CapyT
 
 ### Add it to your Kotlin project
 
-Version **0.1.0** is available from Maven Central. Applications use `swiftui-compose`; the native bridge resolves transitively.
+Version **0.1.0** is available from Maven Central; use its [release guide](https://github.com/zly2006/swiftui-kotlin-binding/blob/swiftui-v0.1.0/docs/getting-started.md) for that API. The examples below use the current source API with Compose `Modifier` (`0.2.0-SNAPSHOT`).
 
-Use Kotlin **2.4.0**, the Kotlin Compose compiler plugin, and a `macosArm64()` target. Add Maven Central and the public runtime dependency:
+After cloning this repository, add `includeBuild("../swiftui-kotlin-binding")` to your application’s `settings.gradle.kts`, adjusting the path to your checkout.
+
+Use Kotlin **2.4.0**, the Kotlin Compose compiler plugin, and a `macosArm64()` target. Add the runtime dependency:
 
 ```kotlin
 repositories { mavenCentral() }
@@ -67,7 +69,7 @@ repositories { mavenCentral() }
 kotlin {
     macosArm64()
     sourceSets.commonMain.dependencies {
-        implementation("me.zly2006.swiftui:swiftui-compose:0.1.0")
+        implementation("me.zly2006.swiftui:swiftui-compose:0.2.0-SNAPSHOT")
     }
 }
 ```
@@ -78,13 +80,14 @@ The macOS bridge and its native static library resolve transitively. You do not 
 
 ```kotlin
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import me.zly2006.swiftui.nativeui.*
 
 @Composable
 fun Counter() {
     var count by remember { mutableStateOf(0) }
-    Column(spacing = 12.0, modifier = NativeModifier.padding(24.0)) {
-        Text("Count: $count", NativeModifier.semanticFont(TextStyle.Headline))
+    Column(spacing = 12.0, modifier = Modifier.padding(24.0)) {
+        Text("Count: $count", Modifier.semanticFont(TextStyle.Headline))
         Button(onClick = { count++ }) { Text("Increment") }
     }
 }

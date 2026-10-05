@@ -147,31 +147,98 @@ private fun header() =
         )
     }
 
+private fun ApiRef.documentation(): String {
+    val framework = if (module == "SwiftUICore") "swiftui" else module.lowercase()
+    val type = owner.lowercase().replace('.', '/')
+    return "https://developer.apple.com/documentation/$framework/$type"
+}
+
+private fun Binding.documentation() =
+    references.distinct().joinToString("\n") {
+        " *\n * [${it.owner}${it.member?.let { member -> ".$member" }.orEmpty()}](${it.documentation()}) in Apple Documentation\n"
+    }
+
+private fun Binding.kdoc(
+    summary: String,
+    property: Boolean = false,
+    component: Boolean = false,
+    backend: Boolean = false,
+    update: Boolean = false,
+): String =
+    buildString {
+        append("/**\n * $summary\n")
+        append(documentation())
+        if (!backend) fields.forEach { append(" * @${if (property) "property" else "param"} ${it.name} Native `${it.name}` parameter.\n") }
+        if (backend) {
+            if (update) append(" * @param element Existing element created by this backend's $name factory.\n")
+            append(" * @param config Immutable native configuration.\n")
+            if (!update) callback?.let { append(" * @param ${it.name} Receives native events; update Kotlin state here.\n") }
+        }
+        if (component) {
+            callback?.let { append(" * @param ${it.name} Callback invoked by the native control; keep controlled state in Kotlin.\n") }
+            append(" * @param modifier Native-backed Compose modifier chain, ordered from outermost to innermost.\n")
+            if (slots.isNotEmpty()) {
+                slots.forEach { append(" * @param $it Composable content for the native $it slot.\n") }
+            } else if (children != Children.None) {
+                append(" * @param content Child content rendered by the native container.\n")
+            }
+        }
+        append(" */\n")
+    }
+
 // @formatter:off
 private fun kotlinApi() = buildString {
     append("package me.zly2006.swiftui.nativeui\n\n")
-    append("data class NativeSize(val width: Double, val height: Double)\n")
-    for (enum in enums) append("enum class ${enum.name}(val nativeValue: Int) { ${enum.entries.mapIndexed { i, entry -> "${entry.first}($i)" }.joinToString()} }\n")
+    append("/** Native dimensions in points.\n * @property width Horizontal extent in points.\n * @property height Vertical extent in points.\n * [GeometryProxy.size](https://developer.apple.com/documentation/swiftui/geometryproxy/size) in Apple Documentation\n */\ndata class NativeSize(val width: Double, val height: Double)\n")
+    for (enum in enums) {
+        val ref = if (enum.nativeMapping) ApiRef("SwiftUI", enum.swiftType.removePrefix("SwiftUI.")) else ApiRef(if (enum.name == "ChartMark") "Charts" else "SwiftUI", if (enum.name == "ChartMark") "Chart" else "PickerStyle")
+        append("/** Native options for ${enum.name}.\n * @property nativeValue Integer discriminator used by the typed native bridge.\n * [${ref.owner}](${ref.documentation()}) in Apple Documentation\n */\nenum class ${enum.name}(val nativeValue: Int) {\n")
+        enum.entries.forEachIndexed { i, entry -> append("    /** Selects the native `${entry.second}` option. */\n    ${entry.first}($i)${if (i == enum.entries.lastIndex) ";" else ","}\n") }
+        append("}\n")
+    }
     append("""
+        /** A named native color or extended-sRGB color, resolved by SwiftUI.
+         * @property kind Internal native color discriminator; use named colors or [rgba].
+         * @property red Extended-sRGB red component for custom colors.
+         * @property green Extended-sRGB green component for custom colors.
+         * @property blue Extended-sRGB blue component for custom colors.
+         * @property alpha Base alpha for custom colors, between zero and one.
+         * @property opacity Additional opacity multiplier, between zero and one.
+         * [Color](https://developer.apple.com/documentation/swiftui/color) in Apple Documentation
+         */
         @ConsistentCopyVisibility
         data class NativeColor internal constructor(val kind: Int, val red: Double = 0.0, val green: Double = 0.0, val blue: Double = 0.0, val alpha: Double = 1.0, val opacity: Double = 1.0) {
             init { require(red.isFinite() && green.isFinite() && blue.isFinite()); require(alpha.isFinite() && alpha in 0.0..1.0 && opacity.isFinite() && opacity in 0.0..1.0) }
+            /** Returns this color with its opacity multiplier replaced by [value] in the range 0..1. */
             fun opacity(value: Double) = copy(opacity = value)
+            /** Native named colors and custom color constructors. */
             companion object {
+                /** Creates an extended-sRGB color from finite RGB components and alpha in the range 0..1.
+                 * @param red Extended-sRGB red component.
+                 * @param green Extended-sRGB green component.
+                 * @param blue Extended-sRGB blue component.
+                 * @param alpha Base opacity between zero and one.
+                 */
                 fun rgba(red: Double, green: Double, blue: Double, alpha: Double = 1.0) = NativeColor(-1, red, green, blue, alpha)
     """.trimIndent() + "\n")
-    namedColors.forEachIndexed { i, name -> append("        val $name = NativeColor($i)\n") }
+    namedColors.forEachIndexed { i, name ->
+        val description = if (name == "WindowBackground") "AppKit's adaptive window background color." else "SwiftUI's named $name color, resolved in the current native environment."
+        append("        /** $description */\n        val $name = NativeColor($i)\n")
+    }
     append("    }\n}\n\n")
     for (b in bindings) {
+        append(b.kdoc("Immutable configuration forwarded to the native ${b.name} adapter.", property = true))
         if (b.fields.isEmpty()) append("data object ${b.name}Config\n") else {
             append("data class ${b.name}Config(${b.fields.joinToString { "val ${it.name}: ${it.type.kotlin()}" }})")
             if (b.validation.isNotEmpty()) append(" { init { ${b.validation.joinToString("; ") { "require($it)" }} } }")
             append("\n")
         }
     }
-    append("\ninterface NativeUiBackend : NativeTreeBackend {\n")
+    append("\n/** Creates and updates typed native elements. Detach owned elements before releasing them. */\ninterface NativeUiBackend : NativeTreeBackend {\n")
     for (b in bindings) {
+        append(b.kdoc("Creates an unparented ${b.name} element owned by this backend. Release it after detaching it.", backend = true).prependIndent("    "))
         append("    fun create${b.name}(config: ${b.name}Config${b.callback?.let { ", ${it.name}: ${it.kotlinType()}" }.orEmpty()}): NativeUiElement\n")
+        append(b.kdoc("Updates an existing ${b.name} element without replacing its identity.", backend = true, update = true).prependIndent("    "))
         append("    fun update${b.name}(element: NativeUiElement, config: ${b.name}Config)\n")
     }
     append("}\n")
@@ -180,25 +247,36 @@ private fun kotlinApi() = buildString {
 
 // @formatter:off
 private fun composeComponents() = buildString {
-    append("package me.zly2006.swiftui.nativeui\n\nimport androidx.compose.runtime.*\n\n")
+    append("package me.zly2006.swiftui.nativeui\n\nimport androidx.compose.runtime.*\nimport androidx.compose.ui.Modifier\n\n")
     for (b in bindings.filter { it.name != "Root" }) {
         val parameters = b.fields.map { "${it.name}: ${it.type.kotlin()}${it.default?.let { d -> " = $d" }.orEmpty()}" } +
-            listOfNotNull(b.callback?.let { "${it.name}: ${it.kotlinType()}" }) + listOf("modifier: NativeModifier = NativeModifier") +
+            listOfNotNull(b.callback?.let { "${it.name}: ${it.kotlinType()}" }) + listOf("modifier: Modifier = Modifier") +
             if (b.children == Children.None) emptyList() else if (b.slots.isNotEmpty()) b.slots.map { "$it: @Composable () -> Unit" } else listOf("content: @Composable () -> Unit")
-        append("@Composable\nfun ${b.name}(${parameters.joinToString()}) {\n")
+        append(b.kdoc("Renders the official native ${b.references.first().owner} capability using Compose state updates.", component = true))
+        append("@Composable\n${if (b.publicComponent) "" else "internal "}fun ${b.name}(${parameters.joinToString()}) {\n")
         append("    val backend = LocalNativeUiBackend.current\n    val config = ${b.config()}\n")
         b.callback?.let { append("    val listener by rememberUpdatedState(${it.name})\n") }
         val callback = b.callback?.let { if (it.payload == null) ", { listener() }" else ", { listener(it) }" }.orEmpty()
-        append("    modifier.wrap {\n        ComposeNode<UiNode, NativeUiApplier>(\n            factory = { UiNode(backend, backend.create${b.name}(config$callback)) },\n            update = { set(config) { backend.update${b.name}(element, it) } },\n")
+        append("    modifier.renderNative {\n        ComposeNode<UiNode, NativeUiApplier>(\n            factory = { UiNode(backend, backend.create${b.name}(config$callback)) },\n            update = { set(config) { backend.update${b.name}(element, it) } },\n")
         val childContent = if (b.children == Children.None) "{}" else if (b.slots.isNotEmpty()) "{ ${b.slots.joinToString("; ") { "Group(content = $it)" }} }" else "content"
         append("            content = $childContent,\n        )\n    }\n}\n\n")
-        b.modifier?.let { modifier ->
+        b.modifier?.takeUnless { b.handwrittenModifier }?.let { modifier ->
             val fields = (b.fields.map { "${it.name}: ${it.type.kotlin()}${it.default?.let { d -> " = $d" }.orEmpty()}" } + listOfNotNull(b.callback?.let { "${it.name}: ${it.kotlinType()}" })).joinToString()
-            val arguments = (b.fields.map { "${it.name} = ${it.name}" } + listOfNotNull(b.callback?.let { "${it.name} = ${it.name}" }) + "content = content").joinToString()
-            append("fun NativeModifier.$modifier($fields): NativeModifier = then { content -> ${b.name}($arguments) }\n\n")
+            val arguments = (b.fields.map { "${it.name} = config.${it.name}" } + listOfNotNull(b.callback?.let { "${it.name} = ${it.name}" }) + "content = content").joinToString()
+            val members = listOf("val config: ${b.name}Config") + listOfNotNull(b.callback?.let { "val ${it.name}: ${it.kotlinType()}" })
+            val construct = listOf(b.config()) + listOfNotNull(b.callback?.name)
+            if (b.fields.isEmpty() && b.callback == null) {
+                append("private data object ${b.name}ModifierElement : NativeViewModifierElement {\n    @Composable override fun Content(content: @Composable () -> Unit) { ${b.name}(content = content) }\n}\n")
+                append(b.kdoc("Adds the native $modifier effect to this Compose modifier chain."))
+                append("fun Modifier.$modifier($fields): Modifier = then(${b.name}ModifierElement)\n\n")
+            } else {
+                append("private data class ${b.name}ModifierElement(${members.joinToString()}) : NativeViewModifierElement {\n    @Composable override fun Content(content: @Composable () -> Unit) { ${b.name}($arguments) }\n}\n")
+                append(b.kdoc("Adds the native $modifier effect to this Compose modifier chain."))
+                append("fun Modifier.$modifier($fields): Modifier = then(${b.name}ModifierElement(${construct.joinToString()}))\n\n")
+            }
         }
     }
-    append("fun NativeModifier.padding(all: Double) = padding(all, all, all, all)\n")
+
 }
 // @formatter:on
 
@@ -270,10 +348,12 @@ private fun macosBindings() = buildString {
         val arguments = callback.payloadAbi()
         append("private fun ${callback.cType()}(context: COpaquePointer?${arguments.joinToString("") { ", ${it.name}: ${when (it.c) { "const char*" -> "CPointer<ByteVar>?"; "int32_t" -> "Int"; else -> "Double" }}" }}) {\n    checkNativeUiMainThread()\n    val callback = checkNotNull(context).asStableRef<NativeCallback>().get()\n    callback.invoke(${when (callback.payload) { null -> "Unit"; ValueType.Text -> "checkNotNull(value).toKString()"; ValueType.Boolean -> "value != 0"; ValueType.Size -> "NativeSize(valueWidth, valueHeight)"; ValueType.Region -> "NativeMapRegion(valueLatitude, valueLongitude, valueLatitudeSpan, valueLongitudeSpan)"; ValueType.Color -> "NativeColor(valueKind, valueRed, valueGreen, valueBlue, valueAlpha, valueOpacity)"; else -> "value" }})\n}\n")
     }
+    append("/** SwiftUI backend for macOS. All operations require the Apple main thread.\n * @param pathCacheLimits Bounds for geometry retained by this backend.\n */\n")
     append("\nclass MacosNativeUiBackend(pathCacheLimits: NativePathCacheLimits = NativePathCacheLimits()) : BaseMacosNativeUiBackend(pathCacheLimits), NativeUiBackend {\n")
     for (b in bindings) {
         val callback = b.callback
         val ffiArgs = b.fields.flatMap { it.abi() }.joinToString { it.kotlin.replace(Regex("\\b(${b.fields.joinToString("|") { field -> field.name }})\\b")) { match -> "config.${match.value}" } }
+        append(b.kdoc("Creates a native ${b.name} element on the main thread.", backend = true).prependIndent("    "))
         append("    override fun create${b.name}(config: ${b.name}Config${callback?.let { ", ${it.name}: ${it.kotlinType()}" }.orEmpty()}): NativeUiElement {\n        checkNativeUiMainThread()\n")
         b.macosMajor?.let { append("        requireNativeMacosVersion($it)\n") }
         val arrays = b.fields.filter { it.type == ValueType.Numbers || it.type == ValueType.Colors || it.type == ValueType.Path }
@@ -306,7 +386,9 @@ private fun macosBindings() = buildString {
         } else if (arrays.isNotEmpty()) {
             append("        return ${nativeScope("own(\"${b.name}\") { checkNotNull(sui_node_${b.abi}_create($ffiArgs)) }")}\n")
         } else append("        return own(\"${b.name}\") { checkNotNull(sui_node_${b.abi}_create($ffiArgs)) }\n")
-        append("    }\n    override fun update${b.name}(element: NativeUiElement, config: ${b.name}Config) {\n")
+        append("    }\n")
+        append(b.kdoc("Updates a native ${b.name} element on the main thread.", backend = true, update = true).prependIndent("    "))
+        append("    override fun update${b.name}(element: NativeUiElement, config: ${b.name}Config) {\n")
         if (arrays.isNotEmpty()) append("        ${nativeScope("sui_node_${b.abi}_update(checked(element, \"${b.name}\")${if (ffiArgs.isEmpty()) "" else ", "}$ffiArgs)")}\n")
         else append("        sui_node_${b.abi}_update(checked(element, \"${b.name}\")${if (ffiArgs.isEmpty()) "" else ", "}$ffiArgs)\n")
         append("    }\n")

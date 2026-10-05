@@ -9,3 +9,5 @@
 - 测试只采集本任务窗口，不激活应用或抢前台。
 - 发布范围与坐标以 `build.gradle.kts` 为准。只有用户明确要求发布时才上传；凭据与签名私钥不得进入 Git。
 - 性能结论必须有等价原生实现的实测对照。不要从技术栈、生成结果或构建成功推断低占用或完整覆盖。
+
+- 公开运行库 API 必须有 KDoc。生成文档引用官方 API；手写便捷组合留在 Kotlin。文档完整性由 `swiftui-codegen/src/test/kotlin/me/zly2006/swiftui/generator/PublicApiDocumentationTest.kt` 检查。

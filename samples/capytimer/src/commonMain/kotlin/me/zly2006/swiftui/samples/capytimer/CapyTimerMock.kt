@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import me.zly2006.swiftui.nativeui.Alignment
 import me.zly2006.swiftui.nativeui.Box
 import me.zly2006.swiftui.nativeui.Button
@@ -14,7 +15,6 @@ import me.zly2006.swiftui.nativeui.Divider
 import me.zly2006.swiftui.nativeui.FontWeight
 import me.zly2006.swiftui.nativeui.HorizontalAlignment
 import me.zly2006.swiftui.nativeui.NativeColor
-import me.zly2006.swiftui.nativeui.NativeModifier
 import me.zly2006.swiftui.nativeui.Row
 import me.zly2006.swiftui.nativeui.ScrollView
 import me.zly2006.swiftui.nativeui.Spacer
@@ -24,7 +24,6 @@ import me.zly2006.swiftui.nativeui.Text
 import me.zly2006.swiftui.nativeui.TextEditor
 import me.zly2006.swiftui.nativeui.TextField
 import me.zly2006.swiftui.nativeui.TextStyle
-import me.zly2006.swiftui.nativeui.WindowBackground
 import me.zly2006.swiftui.nativeui.defaultPadding
 import me.zly2006.swiftui.nativeui.font
 import me.zly2006.swiftui.nativeui.foreground
@@ -73,14 +72,14 @@ class CapyState {
 
 private val border = NativeColor.Gray.opacity(0.25)
 
-private fun cardModifier() = NativeModifier.padding(12.0).roundedBackground(NativeColor.WindowBackground, 12.0).roundedBorder(border, 12.0)
+private fun cardModifier() = Modifier.roundedBorder(border, 12.0).roundedBackground(NativeColor.WindowBackground, 12.0).padding(12.0)
 
 @Composable private fun Card(content: @Composable () -> Unit) {
     Column(spacing = 8.0, alignment = HorizontalAlignment.Leading, modifier = cardModifier(), content = content)
 }
 
 @Composable private fun Heading(value: String) {
-    Text(value, NativeModifier.semanticFont(TextStyle.Headline))
+    Text(value, Modifier.semanticFont(TextStyle.Headline))
 }
 
 @Composable private fun TextButton(
@@ -94,28 +93,28 @@ private fun cardModifier() = NativeModifier.padding(12.0).roundedBackground(Nati
 @Composable
 fun CapyTimerMock(state: CapyState) {
     ScrollView {
-        Column(spacing = 12.0, alignment = HorizontalAlignment.Leading, modifier = NativeModifier.defaultPadding().frame(width = 280.0)) {
+        Column(spacing = 12.0, alignment = HorizontalAlignment.Leading, modifier = Modifier.frame(width = 280.0).defaultPadding()) {
             Card {
                 Column(spacing = 10.0) {
                     Row(spacing = 12.0) {
-                        Box(modifier = NativeModifier.frame(width = 54.0, height = 54.0)) {
+                        Box(modifier = Modifier.frame(width = 54.0, height = 54.0)) {
                             CircleStroke(border, 8.0)
                             CircleStroke(
                                 NativeColor.AccentColor,
                                 8.0,
                                 end = (1.0 - state.remaining / 1500.0).coerceIn(0.0, 1.0),
                                 roundCap = true,
-                                modifier = NativeModifier.rotation(-90.0),
+                                modifier = Modifier.rotation(-90.0),
                             )
                         }
                         Column(spacing = 2.0, alignment = HorizontalAlignment.Leading) {
                             Text(
                                 "${(state.remaining / 60).toString().padStart(2,'0')}:${(state.remaining % 60).toString().padStart(2,'0')}",
-                                NativeModifier.font(28.0, FontWeight.Bold),
+                                Modifier.font(28.0, FontWeight.Bold),
                             )
                             Text(
                                 if (state.running) "Running" else "Paused",
-                                NativeModifier.semanticFont(TextStyle.Caption).foreground(NativeColor.Secondary),
+                                Modifier.foreground(NativeColor.Secondary).semanticFont(TextStyle.Caption),
                             )
                         }
                         Spacer()
@@ -128,26 +127,28 @@ fun CapyTimerMock(state: CapyState) {
             }
             Card {
                 Heading("Todo List")
-                Column(spacing = 8.0, alignment = HorizontalAlignment.Leading, modifier = NativeModifier.padding(top = 2.0)) {
+                Column(spacing = 8.0, alignment = HorizontalAlignment.Leading, modifier = Modifier.padding(top = 2.0)) {
                     state.todos.forEach { todo ->
                         key(todo.id) {
-                            Row(spacing = 8.0, modifier = NativeModifier.padding(top = 4.0, bottom = 4.0)) {
+                            Row(spacing = 8.0, modifier = Modifier.padding(top = 4.0, bottom = 4.0)) {
                                 Button(plain = true, onClick = {
                                     state.todos =
                                         state.todos.map { if (it.id == todo.id) it.copy(done = !it.done) else it }
                                 }) {
                                     SystemImage(
                                         if (todo.done) "checkmark.circle.fill" else "circle",
-                                        NativeModifier.foreground(if (todo.done) NativeColor.AccentColor else NativeColor.Secondary),
+                                        Modifier.foreground(if (todo.done) NativeColor.AccentColor else NativeColor.Secondary),
                                     )
                                 }
                                 Text(
                                     todo.title,
-                                    NativeModifier
+                                    Modifier
+                                        .lineLimit(
+                                            1.0,
+                                        ).foreground(if (todo.done) NativeColor.Secondary else NativeColor.Primary)
                                         .strikeThrough(
                                             todo.done,
-                                        ).foreground(if (todo.done) NativeColor.Secondary else NativeColor.Primary)
-                                        .lineLimit(1.0),
+                                        ),
                                 )
                                 Spacer()
                                 Button(
@@ -162,7 +163,7 @@ fun CapyTimerMock(state: CapyState) {
                             state.newTask,
                             "New task...",
                             { state.newTask = it },
-                            NativeModifier.roundedTextField().frame(height = 26.0),
+                            Modifier.frame(height = 26.0).roundedTextField(),
                         )
                         TextButton("Add") { state.addTask() }
                     }
@@ -170,18 +171,15 @@ fun CapyTimerMock(state: CapyState) {
             }
             Card {
                 Heading("Notes")
-                Column(spacing = 8.0, alignment = HorizontalAlignment.Leading, modifier = NativeModifier.padding(top = 2.0)) {
+                Column(spacing = 8.0, alignment = HorizontalAlignment.Leading, modifier = Modifier.padding(top = 2.0)) {
                     TextEditor(
                         state.notes,
                         {
                             state.notes = it
                         },
-                        NativeModifier
-                            .frame(
-                                height = 100.0,
-                            ).padding(6.0)
-                            .roundedBackground(NativeColor.WindowBackground, 8.0)
-                            .roundedBorder(border, 8.0),
+                        Modifier.roundedBorder(border, 8.0).roundedBackground(NativeColor.WindowBackground, 8.0).padding(6.0).frame(
+                            height = 100.0,
+                        ),
                     )
                 }
             }
@@ -189,20 +187,20 @@ fun CapyTimerMock(state: CapyState) {
                 Heading("Settings")
                 Column(spacing = 8.0, alignment = HorizontalAlignment.Leading) {
                     Row {
-                        Text("Focus (min)", NativeModifier.frame(width = 90.0, alignment = Alignment.Leading))
+                        Text("Focus (min)", Modifier.frame(width = 90.0, alignment = Alignment.Leading))
                         TextField(state.focusMinutes, "25", {
                             state.focusMinutes =
                                 it
-                        }, NativeModifier.frame(width = 60.0).roundedTextField().frame(height = 26.0))
+                        }, Modifier.frame(height = 26.0).roundedTextField().frame(width = 60.0))
                     }
                     Row {
-                        Text("Break (min)", NativeModifier.frame(width = 90.0, alignment = Alignment.Leading))
+                        Text("Break (min)", Modifier.frame(width = 90.0, alignment = Alignment.Leading))
                         TextField(state.breakMinutes, "5", {
                             state.breakMinutes =
                                 it
-                        }, NativeModifier.frame(width = 60.0).roundedTextField().frame(height = 26.0))
+                        }, Modifier.frame(height = 26.0).roundedTextField().frame(width = 60.0))
                     }
-                    Row(spacing = 8.0, modifier = NativeModifier.padding(top = 4.0)) {
+                    Row(spacing = 8.0, modifier = Modifier.padding(top = 4.0)) {
                         TextButton("Save", true) { state.reset() }
                         TextButton("Reset Defaults") {
                             state.focusMinutes = "25"
@@ -210,9 +208,9 @@ fun CapyTimerMock(state: CapyState) {
                             state.reset()
                         }
                     }
-                    Divider(NativeModifier.padding(top = 8.0, bottom = 8.0))
+                    Divider(Modifier.padding(top = 8.0, bottom = 8.0))
                     Row {
-                        Text("Update Settings", NativeModifier.semanticFont(TextStyle.Subheadline).weight(FontWeight.Medium))
+                        Text("Update Settings", Modifier.weight(FontWeight.Medium).semanticFont(TextStyle.Subheadline))
                         Spacer()
                         TextButton("Configure") {
                             state.status =
@@ -227,11 +225,11 @@ fun CapyTimerMock(state: CapyState) {
                     Row {
                         SystemImage(
                             "arrow.clockwise.circle",
-                            NativeModifier.foreground(NativeColor.AccentColor).semanticFont(TextStyle.Title2),
+                            Modifier.semanticFont(TextStyle.Title2).foreground(NativeColor.AccentColor),
                         )
                         Column(spacing = 2.0, alignment = HorizontalAlignment.Leading) {
                             Heading("Updates")
-                            Text(state.status, NativeModifier.semanticFont(TextStyle.Caption).foreground(NativeColor.Green))
+                            Text(state.status, Modifier.foreground(NativeColor.Green).semanticFont(TextStyle.Caption))
                         }
                         Spacer()
                         TextButton("Check") { state.status = "Up to Date" }

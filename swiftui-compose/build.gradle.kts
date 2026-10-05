@@ -24,6 +24,7 @@ kotlin {
             kotlin.srcDir(generated.map { it.dir("common") })
             dependencies {
                 api(compose.runtime)
+                api(compose.ui)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
             }
         }
@@ -32,6 +33,9 @@ kotlin {
             dependencies { implementation(project(":swiftui-bridge")) }
         }
         commonTest.dependencies { implementation(kotlin("test")) }
-        jvmTest.dependencies { implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0") }
+        jvmTest.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+            implementation(compose.foundation)
+        }
     }
 }

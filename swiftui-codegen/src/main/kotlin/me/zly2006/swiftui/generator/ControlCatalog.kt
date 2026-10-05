@@ -31,7 +31,7 @@ val nativeUiCatalog = listOf(
     UiComponent("Button", "controls-and-indicators", "https://developer.apple.com/documentation/swiftui/button", "10.15", 233, setOf("Button"), false),
     UiComponent("HStack", "layout-fundamentals", "https://developer.apple.com/documentation/swiftui/hstack", "10.15", 205, setOf("Row"), false),
     UiComponent("VStack", "layout-fundamentals", "https://developer.apple.com/documentation/swiftui/vstack", "10.15", 183, setOf("Column"), false),
-    UiComponent("Image", "images", "https://developer.apple.com/documentation/swiftui/image", "10.15", 174, setOf("SystemImage", "FileImage", "ResourceImage", "SystemResizableImage"), false),
+    UiComponent("Image", "images", "https://developer.apple.com/documentation/swiftui/image", "10.15", 174, setOf("SystemImage", "FileImage", "ResourceImage"), false),
     UiComponent("ForEach", "view-groupings", "https://developer.apple.com/documentation/swiftui/foreach", "10.15", 152, setOf("ForEach"), false),
     UiComponent("Spacer", "layout-fundamentals", "https://developer.apple.com/documentation/swiftui/spacer", "10.15", 140, setOf("Spacer"), false),
     UiComponent("Section", "view-groupings", "https://developer.apple.com/documentation/swiftui/section", "10.15", 87, setOf("Section"), false),
