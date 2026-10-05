@@ -90,15 +90,44 @@ abstract class BaseMacosNativeUiBackend(pathCacheLimits: NativePathCacheLimits =
         closed = true
     }
 }
-class NativeRootView internal constructor(private var pointer: COpaquePointer?) : AutoCloseable {
-    val nsView: NSView get() { checkNativeUiMainThread(); return interpretObjCPointer(checkNotNull(pointer).rawValue) }
-    override fun close() { checkNativeUiMainThread(); pointer?.let { sui_tree_host_release(it); pointer = null } }
-}
-fun nativeNodeCount(): Int { checkNativeUiMainThread(); return sui_tree_live_nodes() }
-fun nativeHostCount(): Int { checkNativeUiMainThread(); return sui_tree_live_hosts() }
-fun nativePropertyUpdates(): Long { checkNativeUiMainThread(); return sui_tree_property_updates() }
-fun nativeBodyEvaluations(): Long { checkNativeUiMainThread(); return sui_tree_body_evaluations() }
+
 // @formatter:on
+class NativeRootView internal constructor(
+    private var pointer: COpaquePointer?,
+) : AutoCloseable {
+    val nsView: NSView get() {
+        checkNativeUiMainThread()
+        return interpretObjCPointer(checkNotNull(pointer).rawValue)
+    }
+
+    override fun close() {
+        checkNativeUiMainThread()
+        pointer?.let {
+            sui_tree_host_release(it)
+            pointer = null
+        }
+    }
+}
+
+fun nativeNodeCount(): Int {
+    checkNativeUiMainThread()
+    return sui_tree_live_nodes()
+}
+
+fun nativeHostCount(): Int {
+    checkNativeUiMainThread()
+    return sui_tree_live_hosts()
+}
+
+fun nativePropertyUpdates(): Long {
+    checkNativeUiMainThread()
+    return sui_tree_property_updates()
+}
+
+fun nativeBodyEvaluations(): Long {
+    checkNativeUiMainThread()
+    return sui_tree_body_evaluations()
+}
 
 fun nativePathResourceCount(): Int {
     checkNativeUiMainThread()
