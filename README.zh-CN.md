@@ -84,8 +84,8 @@ import me.zly2006.swiftui.nativeui.*
 @Composable
 fun Counter() {
     var count by remember { mutableStateOf(0) }
-    Column(spacing = 12.0, modifier = Modifier.padding(24.0)) {
-        Text("Count: $count", Modifier.semanticFont(TextStyle.Headline))
+    VStack(spacing = 12.0, modifier = Modifier.padding(24.0)) {
+        Text("Count: $count", Modifier.font(Font.TextStyle.headline))
         Button(onClick = { count++ }) { Text("Increment") }
     }
 }

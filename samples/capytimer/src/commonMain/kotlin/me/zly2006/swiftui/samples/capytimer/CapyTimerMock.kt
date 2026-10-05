@@ -7,37 +7,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import me.zly2006.swiftui.nativeui.Alignment
-import me.zly2006.swiftui.nativeui.Box
 import me.zly2006.swiftui.nativeui.Button
 import me.zly2006.swiftui.nativeui.CircleStroke
-import me.zly2006.swiftui.nativeui.Column
+import me.zly2006.swiftui.nativeui.Color
 import me.zly2006.swiftui.nativeui.Divider
-import me.zly2006.swiftui.nativeui.FontWeight
+import me.zly2006.swiftui.nativeui.Font
+import me.zly2006.swiftui.nativeui.HStack
 import me.zly2006.swiftui.nativeui.HorizontalAlignment
-import me.zly2006.swiftui.nativeui.NativeColor
-import me.zly2006.swiftui.nativeui.Row
+import me.zly2006.swiftui.nativeui.Image
 import me.zly2006.swiftui.nativeui.ScrollView
 import me.zly2006.swiftui.nativeui.Spacer
 import me.zly2006.swiftui.nativeui.StyledButton
-import me.zly2006.swiftui.nativeui.SystemImage
 import me.zly2006.swiftui.nativeui.Text
 import me.zly2006.swiftui.nativeui.TextEditor
 import me.zly2006.swiftui.nativeui.TextField
-import me.zly2006.swiftui.nativeui.TextStyle
-import me.zly2006.swiftui.nativeui.defaultPadding
+import me.zly2006.swiftui.nativeui.VStack
+import me.zly2006.swiftui.nativeui.ZStack
 import me.zly2006.swiftui.nativeui.font
-import me.zly2006.swiftui.nativeui.foreground
+import me.zly2006.swiftui.nativeui.fontWeight
+import me.zly2006.swiftui.nativeui.foregroundStyle
 import me.zly2006.swiftui.nativeui.frame
 import me.zly2006.swiftui.nativeui.lineLimit
 import me.zly2006.swiftui.nativeui.opacity
 import me.zly2006.swiftui.nativeui.padding
-import me.zly2006.swiftui.nativeui.rotation
+import me.zly2006.swiftui.nativeui.rotationEffect
 import me.zly2006.swiftui.nativeui.roundedBackground
 import me.zly2006.swiftui.nativeui.roundedBorder
-import me.zly2006.swiftui.nativeui.roundedTextField
-import me.zly2006.swiftui.nativeui.semanticFont
 import me.zly2006.swiftui.nativeui.strikeThrough
-import me.zly2006.swiftui.nativeui.weight
+import me.zly2006.swiftui.nativeui.textFieldStyle
 
 // UI adapted from CapyTimer by anvndev (@andev0x), MIT. See the sample LICENSE.
 data class TodoItem(
@@ -70,16 +67,16 @@ class CapyState {
     }
 }
 
-private val border = NativeColor.Gray.opacity(0.25)
+private val border = Color.gray.opacity(0.25)
 
-private fun cardModifier() = Modifier.roundedBorder(border, 12.0).roundedBackground(NativeColor.WindowBackground, 12.0).padding(12.0)
+private fun cardModifier() = Modifier.roundedBorder(border, 12.0).roundedBackground(Color.windowBackground, 12.0).padding(12.0)
 
 @Composable private fun Card(content: @Composable () -> Unit) {
-    Column(spacing = 8.0, alignment = HorizontalAlignment.Leading, modifier = cardModifier(), content = content)
+    VStack(spacing = 8.0, alignment = HorizontalAlignment.leading, modifier = cardModifier(), content = content)
 }
 
 @Composable private fun Heading(value: String) {
-    Text(value, Modifier.semanticFont(TextStyle.Headline))
+    Text(value, Modifier.font(Font.TextStyle.headline))
 }
 
 @Composable private fun TextButton(
@@ -93,33 +90,33 @@ private fun cardModifier() = Modifier.roundedBorder(border, 12.0).roundedBackgro
 @Composable
 fun CapyTimerMock(state: CapyState) {
     ScrollView {
-        Column(spacing = 12.0, alignment = HorizontalAlignment.Leading, modifier = Modifier.frame(width = 280.0).defaultPadding()) {
+        VStack(spacing = 12.0, alignment = HorizontalAlignment.leading, modifier = Modifier.frame(width = 280.0).padding()) {
             Card {
-                Column(spacing = 10.0) {
-                    Row(spacing = 12.0) {
-                        Box(modifier = Modifier.frame(width = 54.0, height = 54.0)) {
+                VStack(spacing = 10.0) {
+                    HStack(spacing = 12.0) {
+                        ZStack(modifier = Modifier.frame(width = 54.0, height = 54.0)) {
                             CircleStroke(border, 8.0)
                             CircleStroke(
-                                NativeColor.AccentColor,
+                                Color.accentColor,
                                 8.0,
                                 end = (1.0 - state.remaining / 1500.0).coerceIn(0.0, 1.0),
                                 roundCap = true,
-                                modifier = Modifier.rotation(-90.0),
+                                modifier = Modifier.rotationEffect(-90.0),
                             )
                         }
-                        Column(spacing = 2.0, alignment = HorizontalAlignment.Leading) {
+                        VStack(spacing = 2.0, alignment = HorizontalAlignment.leading) {
                             Text(
                                 "${(state.remaining / 60).toString().padStart(2,'0')}:${(state.remaining % 60).toString().padStart(2,'0')}",
-                                Modifier.font(28.0, FontWeight.Bold),
+                                Modifier.font(28.0, Font.Weight.bold),
                             )
                             Text(
                                 if (state.running) "Running" else "Paused",
-                                Modifier.foreground(NativeColor.Secondary).semanticFont(TextStyle.Caption),
+                                Modifier.foregroundStyle(Color.secondary).font(Font.TextStyle.caption),
                             )
                         }
                         Spacer()
                     }
-                    Row {
+                    HStack {
                         TextButton(if (state.running) "Pause" else "Start", true) { state.running = !state.running }
                         TextButton("Reset") { state.reset() }
                     }
@@ -127,17 +124,17 @@ fun CapyTimerMock(state: CapyState) {
             }
             Card {
                 Heading("Todo List")
-                Column(spacing = 8.0, alignment = HorizontalAlignment.Leading, modifier = Modifier.padding(top = 2.0)) {
+                VStack(spacing = 8.0, alignment = HorizontalAlignment.leading, modifier = Modifier.padding(top = 2.0)) {
                     state.todos.forEach { todo ->
                         key(todo.id) {
-                            Row(spacing = 8.0, modifier = Modifier.padding(top = 4.0, bottom = 4.0)) {
+                            HStack(spacing = 8.0, modifier = Modifier.padding(top = 4.0, bottom = 4.0)) {
                                 Button(plain = true, onClick = {
                                     state.todos =
                                         state.todos.map { if (it.id == todo.id) it.copy(done = !it.done) else it }
                                 }) {
-                                    SystemImage(
-                                        if (todo.done) "checkmark.circle.fill" else "circle",
-                                        Modifier.foreground(if (todo.done) NativeColor.AccentColor else NativeColor.Secondary),
+                                    Image(
+                                        systemName = if (todo.done) "checkmark.circle.fill" else "circle",
+                                        modifier = Modifier.foregroundStyle(if (todo.done) Color.accentColor else Color.secondary),
                                     )
                                 }
                                 Text(
@@ -145,7 +142,7 @@ fun CapyTimerMock(state: CapyState) {
                                     Modifier
                                         .lineLimit(
                                             1.0,
-                                        ).foreground(if (todo.done) NativeColor.Secondary else NativeColor.Primary)
+                                        ).foregroundStyle(if (todo.done) Color.secondary else Color.primary)
                                         .strikeThrough(
                                             todo.done,
                                         ),
@@ -154,16 +151,16 @@ fun CapyTimerMock(state: CapyState) {
                                 Button(
                                     plain = true,
                                     onClick = { state.todos = state.todos.filterNot { it.id == todo.id } },
-                                ) { SystemImage("trash") }
+                                ) { Image(systemName = "trash") }
                             }
                         }
                     }
-                    Row(spacing = 8.0) {
+                    HStack(spacing = 8.0) {
                         TextField(
                             state.newTask,
                             "New task...",
                             { state.newTask = it },
-                            Modifier.frame(height = 26.0).roundedTextField(),
+                            Modifier.frame(height = 26.0).textFieldStyle(),
                         )
                         TextButton("Add") { state.addTask() }
                     }
@@ -171,13 +168,13 @@ fun CapyTimerMock(state: CapyState) {
             }
             Card {
                 Heading("Notes")
-                Column(spacing = 8.0, alignment = HorizontalAlignment.Leading, modifier = Modifier.padding(top = 2.0)) {
+                VStack(spacing = 8.0, alignment = HorizontalAlignment.leading, modifier = Modifier.padding(top = 2.0)) {
                     TextEditor(
                         state.notes,
                         {
                             state.notes = it
                         },
-                        Modifier.roundedBorder(border, 8.0).roundedBackground(NativeColor.WindowBackground, 8.0).padding(6.0).frame(
+                        Modifier.roundedBorder(border, 8.0).roundedBackground(Color.windowBackground, 8.0).padding(6.0).frame(
                             height = 100.0,
                         ),
                     )
@@ -185,22 +182,22 @@ fun CapyTimerMock(state: CapyState) {
             }
             Card {
                 Heading("Settings")
-                Column(spacing = 8.0, alignment = HorizontalAlignment.Leading) {
-                    Row {
-                        Text("Focus (min)", Modifier.frame(width = 90.0, alignment = Alignment.Leading))
+                VStack(spacing = 8.0, alignment = HorizontalAlignment.leading) {
+                    HStack {
+                        Text("Focus (min)", Modifier.frame(width = 90.0, alignment = Alignment.leading))
                         TextField(state.focusMinutes, "25", {
                             state.focusMinutes =
                                 it
-                        }, Modifier.frame(height = 26.0).roundedTextField().frame(width = 60.0))
+                        }, Modifier.frame(height = 26.0).textFieldStyle().frame(width = 60.0))
                     }
-                    Row {
-                        Text("Break (min)", Modifier.frame(width = 90.0, alignment = Alignment.Leading))
+                    HStack {
+                        Text("Break (min)", Modifier.frame(width = 90.0, alignment = Alignment.leading))
                         TextField(state.breakMinutes, "5", {
                             state.breakMinutes =
                                 it
-                        }, Modifier.frame(height = 26.0).roundedTextField().frame(width = 60.0))
+                        }, Modifier.frame(height = 26.0).textFieldStyle().frame(width = 60.0))
                     }
-                    Row(spacing = 8.0, modifier = Modifier.padding(top = 4.0)) {
+                    HStack(spacing = 8.0, modifier = Modifier.padding(top = 4.0)) {
                         TextButton("Save", true) { state.reset() }
                         TextButton("Reset Defaults") {
                             state.focusMinutes = "25"
@@ -209,8 +206,8 @@ fun CapyTimerMock(state: CapyState) {
                         }
                     }
                     Divider(Modifier.padding(top = 8.0, bottom = 8.0))
-                    Row {
-                        Text("Update Settings", Modifier.weight(FontWeight.Medium).semanticFont(TextStyle.Subheadline))
+                    HStack {
+                        Text("Update Settings", Modifier.fontWeight(Font.Weight.medium).font(Font.TextStyle.subheadline))
                         Spacer()
                         TextButton("Configure") {
                             state.status =
@@ -221,15 +218,15 @@ fun CapyTimerMock(state: CapyState) {
             }
             Card {
                 Heading("Updates")
-                Column(spacing = 12.0, alignment = HorizontalAlignment.Leading) {
-                    Row {
-                        SystemImage(
-                            "arrow.clockwise.circle",
-                            Modifier.semanticFont(TextStyle.Title2).foreground(NativeColor.AccentColor),
+                VStack(spacing = 12.0, alignment = HorizontalAlignment.leading) {
+                    HStack {
+                        Image(
+                            systemName = "arrow.clockwise.circle",
+                            modifier = Modifier.font(Font.TextStyle.title2).foregroundStyle(Color.accentColor),
                         )
-                        Column(spacing = 2.0, alignment = HorizontalAlignment.Leading) {
+                        VStack(spacing = 2.0, alignment = HorizontalAlignment.leading) {
                             Heading("Updates")
-                            Text(state.status, Modifier.foreground(NativeColor.Green).semanticFont(TextStyle.Caption))
+                            Text(state.status, Modifier.foregroundStyle(Color.green).font(Font.TextStyle.caption))
                         }
                         Spacer()
                         TextButton("Check") { state.status = "Up to Date" }

@@ -82,13 +82,13 @@ class BoundedResourceCacheTest {
     }
 
     @Test fun nativePathSnapshotsInputAndKeepsHashKeysStable() {
-        val input = mutableListOf<NativePathCommand>(NativePathCommand.Move(0.0, 0.0), NativePathCommand.Line(1.0, 1.0))
-        val geometry = NativePath(input)
+        val input = mutableListOf<Path.Element>(Path.Element.Move(0.0, 0.0), Path.Element.Line(1.0, 1.0))
+        val geometry = Path(input)
         val hash = geometry.hashCode()
-        input[1] = NativePathCommand.Line(9.0, 9.0)
+        input[1] = Path.Element.Line(9.0, 9.0)
         assertEquals(hash, geometry.hashCode())
-        assertEquals(NativePathCommand.Line(1.0, 1.0), geometry.commands[1])
+        assertEquals(Path.Element.Line(1.0, 1.0), geometry.commands[1])
         assertEquals(geometry, geometry.copy())
-        assertNotEquals(geometry, NativePath(input))
+        assertNotEquals(geometry, Path(input))
     }
 }

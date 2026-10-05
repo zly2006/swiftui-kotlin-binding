@@ -11,3 +11,5 @@
 - 性能结论必须有等价原生实现的实测对照。不要从技术栈、生成结果或构建成功推断低占用或完整覆盖。
 
 - 公开运行库 API 必须有 KDoc。生成文档引用官方 API；手写便捷组合留在 Kotlin。文档完整性由 `swiftui-codegen/src/test/kotlin/me/zly2006/swiftui/generator/PublicApiDocumentationTest.kt` 检查。
+
+- 公开 API 命名以 Apple 官方类型和成员为准，具体边界见 `docs/architecture.md`；修改命名时检查完整公开面，不能只修用户举出的例子。Compose Runtime 的复用不意味着控件和类型应借用 Compose UI 名称。

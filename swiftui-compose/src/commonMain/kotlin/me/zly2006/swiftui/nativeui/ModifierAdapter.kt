@@ -78,21 +78,21 @@ private fun replacementFor(type: String): String? =
             "Import me.zly2006.swiftui.nativeui.flexibleFrame and use Modifier.flexibleFrame(maxWidth = Double.POSITIVE_INFINITY) " +
                 "and/or maxHeight = Double.POSITIVE_INFINITY. Fractional fill has no automatic equivalent."
         "WrapContentElement" ->
-            "Native views normally use their ideal size. For vertical text sizing, import me.zly2006.swiftui.nativeui.fixedVertical " +
-                "and use Modifier.fixedVertical(); for a fixed container use frame(...). Compose unbounded sizing is not equivalent."
+            "Native views normally use their ideal size. For vertical text sizing, import me.zly2006.swiftui.nativeui.fixedSize " +
+                "and use Modifier.fixedSize(horizontal = false, vertical = true); for a fixed container use frame(...). Compose unbounded sizing is not equivalent."
         "OffsetElement", "OffsetPxElement" ->
             "Import me.zly2006.swiftui.nativeui.offset and use Modifier.offset(x = 8.0, y = 4.0). " +
                 "Values are point offsets; convert pixel values using the display scale. Check right-to-left behavior separately."
         "BackgroundElement" ->
-            "Import me.zly2006.swiftui.nativeui.background and NativeColor; use Modifier.background(NativeColor.Red). " +
+            "Import me.zly2006.swiftui.nativeui.background and Color; use Modifier.background(Color.red). " +
                 "For rounded shapes use roundedBackground(color = ..., radius = ...)."
         "BorderModifierNodeElement" ->
-            "Import me.zly2006.swiftui.nativeui.roundedBorder and NativeColor; " +
-                "use Modifier.roundedBorder(NativeColor.Red, radius = 8.0, lineWidth = 1.0). " +
+            "Import me.zly2006.swiftui.nativeui.roundedBorder and Color; " +
+                "use Modifier.roundedBorder(Color.red, radius = 8.0, lineWidth = 1.0). " +
                 "Use circleBorder(...) for circular borders."
         "BlockGraphicsLayerElement", "GraphicsLayerElement" ->
-            "Import opacity, scale, rotation, clipRounded, clipCircle, blur, or shadow from me.zly2006.swiftui.nativeui. " +
-                "For example, Modifier.opacity(0.5).clipRounded(8.0). Arbitrary graphicsLayer blocks cannot be translated."
+            "Import opacity, scaleEffect, rotationEffect, clipShape, clipCircle, blur, or shadow from me.zly2006.swiftui.nativeui. " +
+                "For example, Modifier.opacity(0.5).clipShape(8.0). Arbitrary graphicsLayer blocks cannot be translated."
         "ClickableElement", "CombinedClickableElement" ->
             "Use me.zly2006.swiftui.nativeui.Button(plain = true, onClick = { ... }) { ... } " +
                 "to make native content clickable. Double-click and long-press behavior have no direct replacement."
@@ -104,7 +104,7 @@ private fun replacementFor(type: String): String? =
                 "This replaces an accessible label only; test tags and other semantics properties require explicit native bindings."
         "OnSizeChangedModifier" ->
             "Use me.zly2006.swiftui.nativeui.GeometryReader(onSizeChanged = { size -> ... }) { ... }. " +
-                "NativeSize uses points rather than pixels. GeometryReader participates in layout, so constrain its frame when necessary."
+                "CGSize uses points rather than pixels. GeometryReader participates in layout, so constrain its frame when necessary."
         "AspectRatioElement" ->
             "Use me.zly2006.swiftui.nativeui.frame with an explicit width and height, e.g. Modifier.frame(width = 160.0, height = 90.0). " +
                 "An adaptive aspect-ratio modifier is not implemented yet."

@@ -6,78 +6,76 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import me.zly2006.swiftui.nativeui.Alignment
-import me.zly2006.swiftui.nativeui.Box
 import me.zly2006.swiftui.nativeui.Button
+import me.zly2006.swiftui.nativeui.CGSize
 import me.zly2006.swiftui.nativeui.CanvasStroke
 import me.zly2006.swiftui.nativeui.Circle
 import me.zly2006.swiftui.nativeui.CircleGradientBorder
-import me.zly2006.swiftui.nativeui.Column
+import me.zly2006.swiftui.nativeui.Color
+import me.zly2006.swiftui.nativeui.ControlSize
+import me.zly2006.swiftui.nativeui.Edge
 import me.zly2006.swiftui.nativeui.Ellipse
-import me.zly2006.swiftui.nativeui.EllipticalGradientColors
-import me.zly2006.swiftui.nativeui.FontWeight
+import me.zly2006.swiftui.nativeui.EllipticalGradient
+import me.zly2006.swiftui.nativeui.Font
 import me.zly2006.swiftui.nativeui.GeometryReader
+import me.zly2006.swiftui.nativeui.HStack
 import me.zly2006.swiftui.nativeui.HorizontalAlignment
+import me.zly2006.swiftui.nativeui.Image
 import me.zly2006.swiftui.nativeui.Label
-import me.zly2006.swiftui.nativeui.LinearGradientColors
+import me.zly2006.swiftui.nativeui.LinearGradient
 import me.zly2006.swiftui.nativeui.LinearGradientPair
 import me.zly2006.swiftui.nativeui.LinearGradientStops
 import me.zly2006.swiftui.nativeui.MeshGradient
-import me.zly2006.swiftui.nativeui.NativeColor
-import me.zly2006.swiftui.nativeui.NativeControlSize
-import me.zly2006.swiftui.nativeui.NativePath
-import me.zly2006.swiftui.nativeui.NativePathCommand
-import me.zly2006.swiftui.nativeui.NativeSize
+import me.zly2006.swiftui.nativeui.Path
 import me.zly2006.swiftui.nativeui.PathFillGradient
-import me.zly2006.swiftui.nativeui.RadialGradientColors
+import me.zly2006.swiftui.nativeui.RadialGradient
 import me.zly2006.swiftui.nativeui.Rectangle
 import me.zly2006.swiftui.nativeui.RoundedGradientBorder
 import me.zly2006.swiftui.nativeui.RoundedRectangle
-import me.zly2006.swiftui.nativeui.Row
-import me.zly2006.swiftui.nativeui.SolidColor
 import me.zly2006.swiftui.nativeui.Spacer
 import me.zly2006.swiftui.nativeui.StyledButton
-import me.zly2006.swiftui.nativeui.SystemImage
 import me.zly2006.swiftui.nativeui.Text
-import me.zly2006.swiftui.nativeui.TextStyle
+import me.zly2006.swiftui.nativeui.TextAlignment
 import me.zly2006.swiftui.nativeui.UnitPoint
+import me.zly2006.swiftui.nativeui.VStack
+import me.zly2006.swiftui.nativeui.ZStack
 import me.zly2006.swiftui.nativeui.background
 import me.zly2006.swiftui.nativeui.blur
 import me.zly2006.swiftui.nativeui.capsuleBackground
 import me.zly2006.swiftui.nativeui.capsuleBorder
 import me.zly2006.swiftui.nativeui.circleBorder
 import me.zly2006.swiftui.nativeui.clipCircle
-import me.zly2006.swiftui.nativeui.clipRounded
+import me.zly2006.swiftui.nativeui.clipShape
 import me.zly2006.swiftui.nativeui.clipped
 import me.zly2006.swiftui.nativeui.controlSize
-import me.zly2006.swiftui.nativeui.fixedVertical
+import me.zly2006.swiftui.nativeui.fixedSize
 import me.zly2006.swiftui.nativeui.flexibleFrame
 import me.zly2006.swiftui.nativeui.font
-import me.zly2006.swiftui.nativeui.foreground
+import me.zly2006.swiftui.nativeui.fontWeight
+import me.zly2006.swiftui.nativeui.foregroundStyle
 import me.zly2006.swiftui.nativeui.frame
 import me.zly2006.swiftui.nativeui.hover
-import me.zly2006.swiftui.nativeui.ignoreTopSafeArea
+import me.zly2006.swiftui.nativeui.ignoresSafeArea
 import me.zly2006.swiftui.nativeui.insetRoundedBorder
-import me.zly2006.swiftui.nativeui.multilineCenter
+import me.zly2006.swiftui.nativeui.multilineTextAlignment
 import me.zly2006.swiftui.nativeui.offset
 import me.zly2006.swiftui.nativeui.opacity
 import me.zly2006.swiftui.nativeui.padding
-import me.zly2006.swiftui.nativeui.rotation
+import me.zly2006.swiftui.nativeui.rotationEffect
 import me.zly2006.swiftui.nativeui.roundedBackground
 import me.zly2006.swiftui.nativeui.roundedBorder
 import me.zly2006.swiftui.nativeui.roundedMask
-import me.zly2006.swiftui.nativeui.scale
-import me.zly2006.swiftui.nativeui.semanticFont
+import me.zly2006.swiftui.nativeui.scaleEffect
 import me.zly2006.swiftui.nativeui.shadow
 import me.zly2006.swiftui.nativeui.tint
 import me.zly2006.swiftui.nativeui.tracking
-import me.zly2006.swiftui.nativeui.weight
 import kotlin.math.roundToInt
 
 // UI adapted from LiquidGlassDemo by Sohrab Sheikhani, MIT. See LICENSE.
 private fun hex(
     value: Int,
     alpha: Double = 1.0,
-) = NativeColor.rgba(
+) = Color(
     ((value shr 16) and 255) / 255.0,
     ((value shr 8) and 255) / 255.0,
     (value and 255) / 255.0,
@@ -113,7 +111,7 @@ class GlassState {
     var fixedHover = false
     var opacity by mutableStateOf(0.8)
     var blur by mutableStateOf(8.0)
-    var viewport by mutableStateOf(NativeSize(660.0, 727.0))
+    var viewport by mutableStateOf(CGSize(660.0, 727.0))
 }
 
 private val primary = hex(0xDDE1E7)
@@ -133,24 +131,24 @@ private fun mix(
     dark: Boolean,
 ) {
     val p = palettes[state.theme]
-    Column(spacing = 0.0, modifier = Modifier.ignoreTopSafeArea().insetRoundedBorder(hex(p.divider), 10.0)) {
-        Box(modifier = Modifier.flexibleFrame(maxWidth = Double.POSITIVE_INFINITY).frame(height = 32.0)) {
-            SolidColor(hex(p.background))
-            Text("Liquid Glass", Modifier.foreground(secondary).font(13.0, FontWeight.Semibold))
+    VStack(spacing = 0.0, modifier = Modifier.ignoresSafeArea(Edge.Set.top).insetRoundedBorder(hex(p.divider), 10.0)) {
+        ZStack(modifier = Modifier.flexibleFrame(maxWidth = Double.POSITIVE_INFINITY).frame(height = 32.0)) {
+            Color(hex(p.background))
+            Text("Liquid Glass", Modifier.foregroundStyle(secondary).font(13.0, Font.Weight.semibold))
         }
         Rectangle(hex(p.divider), Modifier.frame(height = 1.0))
-        Row(spacing = 0.0) {
-            Box(alignment = Alignment.Trailing, modifier = Modifier.frame(width = 240.0)) {
-                SolidColor(hex(p.background).opacity(0.7))
-                Column(
+        HStack(spacing = 0.0) {
+            ZStack(alignment = Alignment.trailing, modifier = Modifier.frame(width = 240.0)) {
+                Color(hex(p.background).opacity(0.7))
+                VStack(
                     spacing = 2.0,
-                    alignment = HorizontalAlignment.Leading,
+                    alignment = HorizontalAlignment.leading,
                     modifier =
                         Modifier
                             .flexibleFrame(
                                 maxWidth = Double.POSITIVE_INFINITY,
                                 maxHeight = Double.POSITIVE_INFINITY,
-                                alignment = Alignment.TopLeading,
+                                alignment = Alignment.topLeading,
                             ).padding(
                                 leading = 8.0,
                                 bottom = 10.0,
@@ -159,11 +157,11 @@ private fun mix(
                 ) {
                     Text(
                         "Themes",
-                        Modifier.padding(top = 12.0, leading = 10.0, bottom = 6.0, trailing = 10.0).foreground(secondary).font(11.0),
+                        Modifier.padding(top = 12.0, leading = 10.0, bottom = 6.0, trailing = 10.0).foregroundStyle(secondary).font(11.0),
                     )
                     palettes.forEachIndexed { index, swatch ->
                         Button(plain = true, onClick = { state.theme = index }) {
-                            Row(
+                            HStack(
                                 spacing = 9.0,
                                 modifier =
                                     Modifier
@@ -173,18 +171,18 @@ private fun mix(
                                             ) {
                                                 primary.opacity(0.06)
                                             } else {
-                                                NativeColor.Clear
+                                                Color.clear
                                             },
                                             7.0,
                                         ).padding(top = 6.0, leading = 10.0, bottom = 6.0, trailing = 10.0),
                             ) {
-                                Box(modifier = Modifier.frame(width = 12.0, height = 12.0)) {
+                                ZStack(modifier = Modifier.frame(width = 12.0, height = 12.0)) {
                                     Circle(hex(swatch.pill), Modifier.circleBorder(hex(swatch.pillBorder)))
                                 }
                                 Text(
                                     swatch.name,
                                     Modifier
-                                        .foreground(
+                                        .foregroundStyle(
                                             if (index ==
                                                 state.theme
                                             ) {
@@ -195,7 +193,11 @@ private fun mix(
                                         ).font(13.0),
                                 )
                                 Spacer()
-                                if (index == state.theme) SystemImage("checkmark", Modifier.foreground(hex(p.accent)).font(11.0))
+                                if (index ==
+                                    state.theme
+                                ) {
+                                    Image(systemName = "checkmark", modifier = Modifier.foregroundStyle(hex(p.accent)).font(11.0))
+                                }
                             }
                         }
                     }
@@ -204,7 +206,7 @@ private fun mix(
                 Rectangle(hex(p.divider), Modifier.frame(width = 1.0))
             }
             GeometryReader(onSizeChanged = { if (it.width > 0) state.viewport = it }) {
-                Box(
+                ZStack(
                     modifier =
                         Modifier.clipped().flexibleFrame(
                             maxWidth = Double.POSITIVE_INFINITY,
@@ -212,15 +214,15 @@ private fun mix(
                         ),
                 ) {
                     Backdrop(state, p)
-                    Box(
+                    ZStack(
                         modifier = Modifier.roundedMask(24.0, 440.0, 400.0, if (state.hovered) 1.02 else 1.0).blur(state.blur),
                     ) { Backdrop(state, p) }
                     RoundedRectangle(
                         24.0,
                         hex(p.panel).opacity(state.opacity),
                         Modifier
-                            .shadow(NativeColor.Black.opacity(0.5), 30.0, y = 14.0)
-                            .scale(
+                            .shadow(Color.black.opacity(0.5), 30.0, y = 14.0)
+                            .scaleEffect(
                                 if (state.hovered) 1.02 else 1.0,
                                 if (state.hovered) 1.02 else 1.0,
                             ).frame(
@@ -228,7 +230,7 @@ private fun mix(
                                 height = 400.0,
                             ),
                     )
-                    Box(
+                    ZStack(
                         modifier =
                             Modifier
                                 .hover {
@@ -236,7 +238,7 @@ private fun mix(
                                         state.hovered =
                                             it
                                     }
-                                }.scale(if (state.hovered) 1.02 else 1.0, if (state.hovered) 1.02 else 1.0)
+                                }.scaleEffect(if (state.hovered) 1.02 else 1.0, if (state.hovered) 1.02 else 1.0)
                                 .roundedBorder(
                                     hex(p.border),
                                     24.0,
@@ -247,9 +249,9 @@ private fun mix(
                     ) {
                         HeroContent(state, p)
                         RoundedGradientBorder(
-                            listOf(NativeColor.White.opacity(0.28), NativeColor.White.opacity(0.02)),
-                            UnitPoint.Top,
-                            UnitPoint.Center,
+                            listOf(Color.white.opacity(0.28), Color.white.opacity(0.02)),
+                            UnitPoint.top,
+                            UnitPoint.center,
                             24.0,
                             1.0,
                         )
@@ -257,17 +259,17 @@ private fun mix(
                 }
             }
             if (state.inspector) {
-                Box(alignment = Alignment.Leading, modifier = Modifier.frame(width = 280.0)) {
-                    SolidColor(hex(p.background).opacity(0.7))
-                    Column(
+                ZStack(alignment = Alignment.leading, modifier = Modifier.frame(width = 280.0)) {
+                    Color(hex(p.background).opacity(0.7))
+                    VStack(
                         spacing = 0.0,
-                        alignment = HorizontalAlignment.Leading,
+                        alignment = HorizontalAlignment.leading,
                         modifier =
                             Modifier
                                 .flexibleFrame(
                                     maxWidth = Double.POSITIVE_INFINITY,
                                     maxHeight = Double.POSITIVE_INFINITY,
-                                    alignment = Alignment.TopLeading,
+                                    alignment = Alignment.topLeading,
                                 ).padding(
                                     leading = 8.0,
                                     bottom = 10.0,
@@ -276,7 +278,7 @@ private fun mix(
                     ) {
                         Text(
                             "Inspector",
-                            Modifier.padding(top = 12.0, leading = 10.0, bottom = 6.0, trailing = 10.0).foreground(secondary).font(
+                            Modifier.padding(top = 12.0, leading = 10.0, bottom = 6.0, trailing = 10.0).foregroundStyle(secondary).font(
                                 11.0,
                             ),
                         )
@@ -286,11 +288,11 @@ private fun mix(
                             "Card Opacity" to "${(state.opacity * 100).roundToInt()}%",
                             "Card Blur" to "${(state.blur / 24 * 100).roundToInt()}%",
                         ).forEach { (label, value) ->
-                            Column(spacing = 0.0) {
-                                Row(modifier = Modifier.padding(top = 8.0, leading = 10.0, bottom = 8.0, trailing = 10.0)) {
-                                    Text(label, Modifier.foreground(secondary).font(13.0))
+                            VStack(spacing = 0.0) {
+                                HStack(modifier = Modifier.padding(top = 8.0, leading = 10.0, bottom = 8.0, trailing = 10.0)) {
+                                    Text(label, Modifier.foregroundStyle(secondary).font(13.0))
                                     Spacer()
-                                    Text(value, Modifier.foreground(primary).font(12.0, FontWeight.Medium))
+                                    Text(value, Modifier.foregroundStyle(primary).font(12.0, Font.Weight.medium))
                                 }
                                 Rectangle(hex(p.divider), Modifier.padding(leading = 10.0).frame(height = 1.0))
                             }
@@ -308,7 +310,7 @@ private fun mix(
     state: GlassState,
     p: Palette,
 ) {
-    Box {
+    ZStack {
         MeshGradient(
             3.0,
             3.0,
@@ -336,12 +338,12 @@ private fun mix(
                 hex(mix(p.background, p.accent, it))
             },
         )
-        val minor = mutableListOf<NativePathCommand>()
-        val major = mutableListOf<NativePathCommand>()
+        val minor = mutableListOf<Path.Element>()
+        val major = mutableListOf<Path.Element>()
 
         fun line(
-            a: NativePathCommand.Move,
-            b: NativePathCommand.Line,
+            a: Path.Element.Move,
+            b: Path.Element.Line,
             index: Int,
         ) {
             (
@@ -362,7 +364,7 @@ private fun mix(
         while (x <=
             state.viewport.width
         ) {
-            line(NativePathCommand.Move(x, 0.0), NativePathCommand.Line(x, state.viewport.height), index++)
+            line(Path.Element.Move(x, 0.0), Path.Element.Line(x, state.viewport.height), index++)
             x += 40.0
         }
         index = 0
@@ -370,11 +372,11 @@ private fun mix(
         while (y <=
             state.viewport.height
         ) {
-            line(NativePathCommand.Move(0.0, y), NativePathCommand.Line(state.viewport.width, y), index++)
+            line(Path.Element.Move(0.0, y), Path.Element.Line(state.viewport.width, y), index++)
             y += 40.0
         }
-        CanvasStroke(NativePath(minor), NativeColor.White.opacity(0.10), 1.0)
-        CanvasStroke(NativePath(major), hex(p.accent).opacity(0.25), 1.0)
+        CanvasStroke(Path(minor), Color.white.opacity(0.10), 1.0)
+        CanvasStroke(Path(major), hex(p.accent).opacity(0.25), 1.0)
     }
 }
 
@@ -382,7 +384,7 @@ private fun mix(
     state: GlassState,
     p: Palette,
 ) {
-    Column(spacing = 0.0, modifier = Modifier.padding(leading = 36.0, trailing = 36.0)) {
+    VStack(spacing = 0.0, modifier = Modifier.padding(leading = 36.0, trailing = 36.0)) {
         Text(
             p.name.uppercase(),
             Modifier
@@ -393,17 +395,17 @@ private fun mix(
                     leading = 10.0,
                     bottom = 4.0,
                     trailing = 10.0,
-                ).foreground(
+                ).foregroundStyle(
                     hex(p.accent),
                 ).tracking(
                     0.6,
                 ).font(
                     11.0,
-                    FontWeight.Semibold,
+                    Font.Weight.semibold,
                 ),
         )
         AppIcon(
-            Modifier.padding(top = 20.0).shadow(hex(p.accent).opacity(0.35), 12.0, y = 6.0).frame(width = 76.0, height = 76.0).scale(
+            Modifier.padding(top = 20.0).shadow(hex(p.accent).opacity(0.35), 12.0, y = 6.0).frame(width = 76.0, height = 76.0).scaleEffect(
                 76.0 / 1024,
                 76.0 / 1024,
             ),
@@ -412,20 +414,20 @@ private fun mix(
             "Liquid Glass",
             Modifier
                 .padding(top = 18.0)
-                .foreground(primary)
-                .weight(FontWeight.Bold)
-                .semanticFont(TextStyle.LargeTitle),
+                .foregroundStyle(primary)
+                .fontWeight(Font.Weight.bold)
+                .font(Font.TextStyle.largeTitle),
         )
         Text(
             "Real Liquid Glass over a live themed mesh — tint, frost, and light respond as you tune them.",
             Modifier
                 .padding(top = 8.0)
-                .fixedVertical()
-                .foreground(secondary)
-                .multilineCenter()
-                .semanticFont(TextStyle.Callout),
+                .fixedSize(horizontal = false, vertical = true)
+                .foregroundStyle(secondary)
+                .multilineTextAlignment(TextAlignment.center)
+                .font(Font.TextStyle.callout),
         )
-        Row(spacing = 12.0, modifier = Modifier.controlSize(NativeControlSize.Large).padding(top = 24.0)) {
+        HStack(spacing = 12.0, modifier = Modifier.controlSize(ControlSize.large).padding(top = 24.0)) {
             StyledButton(
                 true,
                 { state.settings = !state.settings },
@@ -439,42 +441,42 @@ private fun mix(
 }
 
 @Composable private fun AppIcon(modifier: Modifier) {
-    Box(modifier = modifier) {
-        Box(modifier = Modifier.frame(width = 1024.0, height = 1024.0)) {
-            LinearGradientColors(
+    ZStack(modifier = modifier) {
+        ZStack(modifier = Modifier.frame(width = 1024.0, height = 1024.0)) {
+            LinearGradient(
                 listOf(hex(0xC0B4EC), hex(0x9484D8), hex(0x6F5CBD), hex(0x453A8E)),
-                UnitPoint.TopLeading,
-                UnitPoint.BottomTrailing,
-                Modifier.clipRounded(228.0),
+                UnitPoint.topLeading,
+                UnitPoint.bottomTrailing,
+                Modifier.clipShape(228.0),
             )
-            EllipticalGradientColors(
-                listOf(NativeColor.White.opacity(0.35), NativeColor.Clear),
+            EllipticalGradient(
+                listOf(Color.white.opacity(0.35), Color.clear),
                 0.5,
                 0.0,
                 0.0,
                 0.85,
-                Modifier.clipRounded(228.0),
+                Modifier.clipShape(228.0),
             )
             LinearGradientPair(
-                NativeColor.Clear,
-                NativeColor.Black.opacity(0.28),
-                UnitPoint.Center,
-                UnitPoint.Bottom,
-                Modifier.clipRounded(228.0),
+                Color.clear,
+                Color.black.opacity(0.28),
+                UnitPoint.center,
+                UnitPoint.bottom,
+                Modifier.clipShape(228.0),
             )
             RoundedGradientBorder(
-                listOf(NativeColor.White.opacity(0.8), NativeColor.White.opacity(0.12), NativeColor.Clear),
-                UnitPoint.Top,
-                UnitPoint.Center,
+                listOf(Color.white.opacity(0.8), Color.white.opacity(0.12), Color.clear),
+                UnitPoint.top,
+                UnitPoint.center,
                 224.0,
                 5.0,
                 Modifier.padding(4.0).blur(1.0),
             )
         }
-        Box(modifier = Modifier.offset(y = 8.0).frame(width = 700.0, height = 700.0)) {
-            Circle(NativeColor.Black.opacity(0.28), Modifier.offset(y = 42.0).blur(44.0))
-            RadialGradientColors(
-                listOf(NativeColor.White, hex(0xF0F3FF), hex(0xCDD6F6)),
+        ZStack(modifier = Modifier.offset(y = 8.0).frame(width = 700.0, height = 700.0)) {
+            Circle(Color.black.opacity(0.28), Modifier.offset(y = 42.0).blur(44.0))
+            RadialGradient(
+                listOf(Color.white, hex(0xF0F3FF), hex(0xCDD6F6)),
                 0.32,
                 0.24,
                 60.0,
@@ -482,7 +484,7 @@ private fun mix(
                 Modifier.clipCircle(),
             )
             LinearGradientStops(
-                listOf(NativeColor.Clear, hex(0x6F5CBD).opacity(0.35)),
+                listOf(Color.clear, hex(0x6F5CBD).opacity(0.35)),
                 listOf(0.55, 1.0),
                 modifier = Modifier.clipCircle(),
             )
@@ -490,40 +492,40 @@ private fun mix(
             PathFillGradient(path, listOf(hex(0x6A58BC), hex(0x3D2C85)), modifier = Modifier.frame(width = 400.0, height = 465.0))
             PathFillGradient(
                 path,
-                listOf(NativeColor.White.opacity(0.35), NativeColor.Clear),
-                UnitPoint.Top,
-                UnitPoint.Center,
+                listOf(Color.white.opacity(0.35), Color.clear),
+                UnitPoint.top,
+                UnitPoint.center,
                 Modifier.frame(width = 400.0, height = 465.0),
             )
             Ellipse(
-                NativeColor.White.opacity(0.95),
+                Color.white.opacity(0.95),
                 Modifier
                     .offset(-155.0, -205.0)
                     .blur(16.0)
-                    .rotation(-24.0)
+                    .rotationEffect(-24.0)
                     .frame(width = 210.0, height = 130.0),
             )
             Ellipse(
-                NativeColor.White,
+                Color.white,
                 Modifier
                     .offset(-215.0, -245.0)
                     .blur(8.0)
-                    .rotation(-24.0)
+                    .rotationEffect(-24.0)
                     .frame(width = 64.0, height = 40.0),
             )
-            CircleGradientBorder(listOf(NativeColor.White.opacity(0.9), hex(0x6F5CBD).opacity(0.4)), 4.0, Modifier.blur(1.0))
+            CircleGradientBorder(listOf(Color.white.opacity(0.9), hex(0x6F5CBD).opacity(0.4)), 4.0, Modifier.blur(1.0))
         }
     }
 }
 
-private fun dropPath(): NativePath {
+private fun dropPath(): Path {
     val w = 400.0
     val h = 465.0
     val r = h * 0.42
-    return NativePath(
+    return Path(
         listOf(
-            NativePathCommand.Move(w * 0.5, h * 0.05),
-            NativePathCommand.Curve(
+            Path.Element.Move(w * 0.5, h * 0.05),
+            Path.Element.Curve(
                 w * 0.5 - r * 0.643,
                 h * 0.60 - r * 0.766,
                 w * 0.47,
@@ -531,9 +533,9 @@ private fun dropPath(): NativePath {
                 w * 0.36,
                 h * 0.20,
             ),
-            NativePathCommand.Arc(w * 0.5, h * 0.60, r, 230.0, 310.0, true),
-            NativePathCommand.Curve(w * 0.5, h * 0.05, w * 0.64, h * 0.20, w * 0.53, h * 0.18),
-            NativePathCommand.Close,
+            Path.Element.Arc(w * 0.5, h * 0.60, r, 230.0, 310.0, true),
+            Path.Element.Curve(w * 0.5, h * 0.05, w * 0.64, h * 0.20, w * 0.53, h * 0.18),
+            Path.Element.Close,
         ),
     )
 }

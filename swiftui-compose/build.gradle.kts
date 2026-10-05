@@ -39,3 +39,8 @@ kotlin {
         }
     }
 }
+
+// Dependency changes must invalidate the metadata consumed by common source sets and IDE import.
+tasks.named("generateProjectStructureMetadata").configure {
+    inputs.file(layout.projectDirectory.file("build.gradle.kts"))
+}

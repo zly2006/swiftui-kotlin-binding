@@ -9,12 +9,12 @@ import androidx.compose.ui.Modifier
  */
 @Composable
 fun LinearGradientPair(
-    first: NativeColor,
-    last: NativeColor,
-    start: UnitPoint = UnitPoint.Top,
-    end: UnitPoint = UnitPoint.Bottom,
+    first: Color,
+    last: Color,
+    start: UnitPoint = UnitPoint.top,
+    end: UnitPoint = UnitPoint.bottom,
     modifier: Modifier = Modifier,
-) = LinearGradientColors(listOf(first, last), start, end, modifier)
+) = LinearGradient(listOf(first, last), start, end, modifier)
 
 /**
  * Creates a native linear gradient with an evenly spaced middle color.
@@ -22,10 +22,10 @@ fun LinearGradientPair(
  */
 @Composable
 fun LinearGradient(
-    first: NativeColor,
-    middle: NativeColor,
-    last: NativeColor,
-    start: UnitPoint = UnitPoint.Top,
-    end: UnitPoint = UnitPoint.Bottom,
+    first: Color,
+    middle: Color,
+    last: Color,
+    start: UnitPoint = UnitPoint.top,
+    end: UnitPoint = UnitPoint.bottom,
     modifier: Modifier = Modifier,
-) = LinearGradientColors(listOf(first, middle, last), start, end, modifier)
+) = LinearGradient(listOf(first, middle, last), start, end, modifier)

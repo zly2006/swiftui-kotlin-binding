@@ -5,51 +5,51 @@ import androidx.compose.ui.Modifier
 
 /** Composes an arbitrary native background behind this content. */
 fun Modifier.background(
-    alignment: Alignment = Alignment.Center,
+    alignment: Alignment = Alignment.center,
     content: @Composable () -> Unit,
 ): Modifier = then(BackgroundContentElement(alignment, content))
 
 /** Composes arbitrary native content over this content. */
 fun Modifier.overlay(
-    alignment: Alignment = Alignment.Center,
+    alignment: Alignment = Alignment.center,
     content: @Composable () -> Unit,
 ): Modifier = then(OverlayContentElement(alignment, content))
 
 /** Uses native content's alpha as a mask for this content. */
 fun Modifier.mask(
-    alignment: Alignment = Alignment.Center,
+    alignment: Alignment = Alignment.center,
     content: @Composable () -> Unit,
 ): Modifier = then(MaskContentElement(alignment, content))
 
 /** Adds a filled continuous rounded rectangle as a background, using native points. */
 fun Modifier.roundedBackground(
-    color: NativeColor,
+    color: Color,
     radius: Double,
 ): Modifier = background { RoundedRectangle(radius, color) }
 
 /** Overlays a continuous rounded rectangle stroke centered on its boundary. */
 fun Modifier.roundedBorder(
-    color: NativeColor,
+    color: Color,
     radius: Double,
     lineWidth: Double = 1.0,
 ): Modifier = overlay { RoundedRectangleStroke(color, radius, lineWidth) }
 
 /** Overlays a continuous rounded rectangle stroke inset from its boundary. */
 fun Modifier.insetRoundedBorder(
-    color: NativeColor,
+    color: Color,
     radius: Double,
     lineWidth: Double = 1.0,
 ): Modifier = overlay { RoundedRectangleStroke(color, radius, lineWidth, inset = true) }
 
 /** Overlays a circle stroke centered on its boundary. Width uses native points. */
 fun Modifier.circleBorder(
-    color: NativeColor,
+    color: Color,
     lineWidth: Double = 1.0,
 ): Modifier = overlay { CircleOutline(color, lineWidth) }
 
 /** Overlays an inset capsule stroke. Width uses native points. */
 fun Modifier.capsuleBorder(
-    color: NativeColor,
+    color: Color,
     lineWidth: Double = 1.0,
 ): Modifier = overlay { CapsuleOutline(color, lineWidth) }
 
@@ -59,10 +59,10 @@ fun Modifier.roundedMask(
     width: Double,
     height: Double,
     scale: Double = 1.0,
-): Modifier = mask { RoundedRectangleShape(radius, Modifier.scale(scale, scale).frame(width, height)) }
+): Modifier = mask { RoundedRectangleShape(radius, Modifier.scaleEffect(scale, scale).frame(width, height)) }
 
 /** Adds a capsule filled with [color] behind the content. */
-fun Modifier.capsuleBackground(color: NativeColor): Modifier = background { Capsule(color) }
+fun Modifier.capsuleBackground(color: Color): Modifier = background { Capsule(color) }
 
 private data class BackgroundContentElement(
     val alignment: Alignment,

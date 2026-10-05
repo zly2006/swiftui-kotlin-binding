@@ -37,8 +37,8 @@ private class MacosElement(val owner: BaseMacosNativeUiBackend, val kind: String
  * @param pathCacheLimits Bounds for geometry retained by this backend.
  */
 abstract class BaseMacosNativeUiBackend(pathCacheLimits: NativePathCacheLimits = NativePathCacheLimits()) : NativeTreeBackend, AutoCloseable {
-    private val paths = BoundedResourceCache<NativePath, COpaquePointer>(pathCacheLimits.maxEntries, pathCacheLimits.maxCommands, ::buildNativePath, ::sui_path_release)
-    internal fun <R> withNativePath(spec: NativePath, block: (COpaquePointer) -> R): R {
+    private val paths = BoundedResourceCache<Path, COpaquePointer>(pathCacheLimits.maxEntries, pathCacheLimits.maxCommands, ::buildNativePath, ::sui_path_release)
+    internal fun <R> withNativePath(spec: Path, block: (COpaquePointer) -> R): R {
         checkNativeUiMainThread(); check(!closed)
         return paths.use(spec, spec.commands.size, block)
     }
@@ -101,7 +101,7 @@ abstract class BaseMacosNativeUiBackend(pathCacheLimits: NativePathCacheLimits =
     /** Sends [value] through a native numeric callback relay on the main thread. */
     fun debugDouble(element: NativeUiElement, value: Double) = sui_node_debug_double(checked(element), value)
     /** Sends [color] through a native color callback relay on the main thread. */
-    fun debugColor(element: NativeUiElement, color: NativeColor) = sui_node_debug_color(checked(element), color.kind, color.red, color.green, color.blue, color.alpha, color.opacity)
+    fun debugColor(element: NativeUiElement, color: Color) = sui_node_debug_color(checked(element), color.kind, color.red, color.green, color.blue, color.alpha, color.opacity)
     /** Releases this owner's native resources on the main thread; safe to call more than once. */
     override fun close() {
         if (closed) return

@@ -87,8 +87,34 @@ class PublicApiDocumentationTest {
             assertTrue(maintained.isNotEmpty() && generated.isNotEmpty())
             assertTrue(missing.isEmpty(), missing.joinToString("\n"))
             val components = destination.resolve("common/NativeComponents.kt").readText()
-            assertTrue(!components.contains("fun Modifier.semanticFont"))
-            assertTrue(!components.contains("fun Modifier.captionTwo"))
+            val legacy =
+                listOf(
+                    "Row",
+                    "Column",
+                    "Box",
+                    "LazyRow",
+                    "LazyColumn",
+                    "NativeList",
+                    "SolidColor",
+                    "NativeColor",
+                    "NativeSize",
+                    "NativePath",
+                    "NativeMapRegion",
+                    "NativeControlSize",
+                    "SymbolMode",
+                    "ToolbarPlacement",
+                    "PickerPresentation",
+                )
+            val api = destination.resolve("common/NativeApi.kt").readText()
+            legacy.forEach { name ->
+                assertTrue(
+                    !Regex("(?m)^(?:fun|class|data class|enum class) " + name + "\\b").containsMatchIn(components + api),
+                    "Legacy public API: $name",
+                )
+            }
+
+            assertTrue(!components.contains("fun Modifier.font(style: Font.TextStyle"))
+            assertTrue(!components.contains("fun Modifier.caption2"))
         } finally {
             Disposer.dispose(disposable)
             destination.deleteRecursively()

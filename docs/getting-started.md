@@ -60,14 +60,14 @@ import me.zly2006.swiftui.nativeui.*
 @Composable
 fun Counter() {
     var count by remember { mutableStateOf(0) }
-    Column(spacing = 12.0, modifier = Modifier.padding(24.0)) {
-        Text("Count: $count", Modifier.semanticFont(TextStyle.Headline))
+    VStack(spacing = 12.0, modifier = Modifier.padding(24.0)) {
+        Text("Count: $count", Modifier.font(Font.TextStyle.headline))
         Button(onClick = { count++ }) { Text("Increment") }
     }
 }
 ```
 
-`Row`, `Column`, and `Box` call native stack containers. `Text`, `Button`, and `TextEditor` call official SwiftUI controls. Controls accept `androidx.compose.ui.Modifier`. Native extensions use Compose chain order: `Modifier.background(NativeColor.Red).padding(12.0)` includes the padding in the background. Use native extension imports; unsupported Compose elements throw an exception that suggests alternatives. See [Architecture](architecture.md) for the modifier boundary.
+`HStack`, `VStack`, and `ZStack` call native stack containers. `Text`, `Button`, and `TextEditor` call official SwiftUI controls. Controls accept `androidx.compose.ui.Modifier`. Native extensions use Compose chain order: `Modifier.background(Color.red).padding(12.0)` includes the padding in the background. Use native extension imports; unsupported Compose elements throw an exception that suggests alternatives. See [Architecture](architecture.md) for the modifier boundary.
 
 ## Open a native window
 

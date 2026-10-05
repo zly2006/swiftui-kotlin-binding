@@ -90,7 +90,7 @@ class NativeCompositionTest {
             var title by mutableStateOf("before")
             val composition = NativeComposition(recorder.backend, StandardTestDispatcher(testScheduler))
             composition.setContent {
-                val decoration = Modifier.background(NativeColor.Red).then(Modifier.padding(inset)).frame(width = 100.0)
+                val decoration = Modifier.background(Color.red).then(Modifier.padding(inset)).frame(width = 100.0)
                 Text(title, decoration)
                 Text("second", decoration)
             }
@@ -154,7 +154,7 @@ class NativeCompositionTest {
             val cases =
                 listOf(
                     Modifier.composePadding(8.dp) to "Modifier.padding(all = 12.0)",
-                    Modifier.composeBackground(ComposeColor.Red) to "Modifier.background(NativeColor.Red)",
+                    Modifier.composeBackground(ComposeColor.Red) to "Modifier.background(Color.red)",
                     Modifier.composeWidth(120.dp) to "Modifier.frame(width = 120.0, height = 40.0)",
                     Modifier.composeAlpha(0.5f) to "Modifier.opacity(0.5)",
                     Modifier.semantics { contentDescription = "Description" } to "Modifier.accessibilityLabel",
@@ -165,7 +165,7 @@ class NativeCompositionTest {
                 val composition = NativeComposition(recorder.backend, StandardTestDispatcher(testScheduler))
                 val failure =
                     assertFailsWith<UnsupportedComposeModifierException> {
-                        composition.setContent { Text("Unsupported", Modifier.foreground(NativeColor.Blue).then(modifier)) }
+                        composition.setContent { Text("Unsupported", Modifier.foregroundStyle(Color.blue).then(modifier)) }
                     }
                 assertNotNull(failure.replacement)
                 assertTrue(failure.message.orEmpty().contains(alternative), failure.message)
@@ -225,13 +225,13 @@ class NativeCompositionTest {
         assertFailsWith<IllegalArgumentException> { DatePickerConfig("Date", 0.0, date = false, time = false) }
         assertFailsWith<IllegalArgumentException> { AsyncImageConfig("https://example.com/image.png", 0.0, false) }
         assertFailsWith<IllegalArgumentException> { TimelineViewConfig(-1.0, false) }
-        assertFailsWith<IllegalArgumentException> { ChartConfig(listOf(0.0), emptyList(), ChartMark.Line, "x", "y") }
+        assertFailsWith<IllegalArgumentException> { ChartConfig(listOf(0.0), emptyList(), ChartMark.line, "x", "y") }
     }
 
     @Test fun drawingUpdatesPreserveNodesAndHoverUsesLatestCallback() =
         runTest {
             val recorder = NativeRecorder()
-            var color by mutableStateOf(NativeColor.Blue)
+            var color by mutableStateOf(Color.blue)
             var endpoint by mutableStateOf(20.0)
             var callbackVersion by mutableStateOf(1)
             var observedVersion = 0
@@ -239,8 +239,8 @@ class NativeCompositionTest {
             val composition = NativeComposition(recorder.backend, StandardTestDispatcher(testScheduler))
             composition.setContent {
                 val version = callbackVersion
-                val path = NativePath(listOf(NativePathCommand.Move(0.0, 0.0), NativePathCommand.Line(endpoint, endpoint)))
-                Box(
+                val path = Path(listOf(Path.Element.Move(0.0, 0.0), Path.Element.Line(endpoint, endpoint)))
+                ZStack(
                     modifier =
                         Modifier.hover {
                             observedVersion = version
@@ -248,21 +248,21 @@ class NativeCompositionTest {
                         },
                 ) {
                     MeshGradient(2.0, 2.0, listOf(0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0), List(4) { color })
-                    PathFillGradient(path, listOf(color, NativeColor.Clear))
+                    PathFillGradient(path, listOf(color, Color.clear))
                 }
             }
             runCurrent()
             val created = recorder.all.size
-            color = NativeColor.Purple
+            color = Color.purple
             endpoint = 40.0
             callbackVersion = 2
             runCurrent()
             assertEquals(created, recorder.all.size)
             val mesh = recorder.all.single { it.kind == "MeshGradient" }.config as MeshGradientConfig
-            assertEquals(List(4) { NativeColor.Purple }, mesh.colors)
+            assertEquals(List(4) { Color.purple }, mesh.colors)
             val fill = recorder.all.single { it.kind == "PathFillGradient" }.config as PathFillGradientConfig
-            assertEquals(NativePathCommand.Line(40.0, 40.0), fill.path.commands.last())
-            assertEquals(listOf(NativeColor.Purple, NativeColor.Clear), fill.colors)
+            assertEquals(Path.Element.Line(40.0, 40.0), fill.path.commands.last())
+            assertEquals(listOf(Color.purple, Color.clear), fill.colors)
             @Suppress("UNCHECKED_CAST")
             val hover = recorder.all.single { it.kind == "Hover" }.callback as (Boolean) -> Unit
             hover(true)
@@ -286,7 +286,7 @@ class NativeCompositionTest {
             val composition = NativeComposition(recorder.backend, StandardTestDispatcher(testScheduler))
             composition.setContent {
                 val version = callbackVersion
-                Column {
+                VStack {
                     Text("count=$count")
                     Button(onClick = {
                         observed = version
@@ -321,9 +321,9 @@ class NativeCompositionTest {
             val recorder = NativeRecorder()
             var ids by mutableStateOf(listOf("a", "b", "c"))
             val composition = NativeComposition(recorder.backend, StandardTestDispatcher(testScheduler))
-            composition.setContent { Column { ForEach(ids, { it }) { Text(it) } } }
+            composition.setContent { VStack { ForEach(ids, { it }) { Text(it) } } }
             runCurrent()
-            val column = recorder.all.single { it.kind == "Column" }
+            val column = recorder.all.single { it.kind == "VStack" }
             val original = column.children.toList()
             ids = listOf("c", "a", "b")
             runCurrent()

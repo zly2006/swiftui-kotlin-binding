@@ -20,3 +20,5 @@ Module responsibilities are summarized in the [README](../README.md#how-it-works
 Controls accept the real `androidx.compose.ui.Modifier`; the Compose UI dependency supplies its API without creating a Compose drawing host. Native extensions implement `Modifier.Element` and forward official native calls. Chains use Compose order, with the first element outside the elements that follow it; `Modifier.composed` is materialized separately for each use.
 
 Compose layout, draw, and input elements require their own execution backend and cannot automatically run in this native tree. Unsupported elements throw `UnsupportedComposeModifierException` before creating the affected subtree; its message identifies native alternatives where available.
+
+Public control, value-type, and native-operation names follow their Apple API counterparts. Compose supplies the runtime and the user-requested `Modifier` interface; it does not determine the native API vocabulary. Kotlin-only convenience compositions must remain visibly separate from direct native bindings.

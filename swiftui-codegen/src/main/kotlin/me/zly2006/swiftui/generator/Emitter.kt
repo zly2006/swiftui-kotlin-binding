@@ -10,13 +10,14 @@ private fun ValueType.kotlin(): String =
         ValueType.Number -> "Double"
         ValueType.OptionalNumber -> "Double?"
         ValueType.Boolean -> "Boolean"
-        ValueType.Color -> "NativeColor"
-        ValueType.Size -> "NativeSize"
-        ValueType.Region -> "NativeMapRegion"
+        ValueType.Color -> "Color"
+        ValueType.Size -> "CGSize"
+        ValueType.Point -> "UnitPoint"
+        ValueType.Region -> "MKCoordinateRegion"
         ValueType.Numbers -> "List<Double>"
-        ValueType.Colors -> "List<NativeColor>"
-        ValueType.Path -> "NativePath"
-        is ValueType.Enumeration -> name
+        ValueType.Colors -> "List<Color>"
+        ValueType.Path -> "Path"
+        is ValueType.Enumeration -> enums.single { it.name == name }.kotlinName
     }
 
 private fun ValueType.swift(): String =
@@ -27,6 +28,7 @@ private fun ValueType.swift(): String =
         ValueType.Boolean -> "Bool"
         ValueType.Color -> "NativeColorValue"
         ValueType.Size -> "CGSize"
+        ValueType.Point -> "SwiftUI.UnitPoint"
         ValueType.Region -> "NativeMapRegionValue"
         ValueType.Numbers -> "[Double]"
         ValueType.Colors -> "[NativeColorValue]"
@@ -40,7 +42,8 @@ private data class AbiField(val name: String, val c: String, val swift: String, 
 
 // @formatter:off
 private fun Field.abi(): List<AbiField> = when (type) {
-    ValueType.Region -> listOf("latitude", "longitude", "latitudeSpan", "longitudeSpan").map { AbiField(name + it.replaceFirstChar(Char::uppercase), "double", "Double", "$name.$it") }
+    ValueType.Point -> listOf(AbiField(name + "X", "double", "Double", "$name.x"), AbiField(name + "Y", "double", "Double", "$name.y"))
+    ValueType.Region -> listOf("latitude", "longitude", "latitudeSpan", "longitudeSpan").map { AbiField(name + it.replaceFirstChar(Char::uppercase), "double", "Double", "$name.${when (it) { "latitude" -> "center.latitude"; "longitude" -> "center.longitude"; "latitudeSpan" -> "span.latitudeDelta"; else -> "span.longitudeDelta" }}") }
     ValueType.Path -> listOf(AbiField(name, "void*", "UnsafeMutableRawPointer", "${name}Handle"))
     ValueType.Numbers -> listOf(AbiField("${name}Values", "const double*", "UnsafePointer<Double>", "${name}Buffer"), AbiField("${name}Count", "int32_t", "Int32", "$name.size"))
     ValueType.Colors -> listOf(AbiField("${name}Kinds", "const int32_t*", "UnsafePointer<Int32>", "${name}KindsBuffer"), AbiField("${name}Components", "const double*", "UnsafePointer<Double>", "${name}ComponentsBuffer"), AbiField("${name}Count", "int32_t", "Int32", "$name.size"))
@@ -61,6 +64,7 @@ private fun Field.swiftArgument() =
         ValueType.OptionalNumber -> "$name.isNaN ? nil : $name"
         ValueType.Color -> "NativeColorValue(kind: ${name}Kind, red: ${name}Red, green: ${name}Green, blue: ${name}Blue, alpha: ${name}Alpha, opacity: ${name}Opacity)"
         ValueType.Size -> "CGSize(width: ${name}Width, height: ${name}Height)"
+        ValueType.Point -> "SwiftUI.UnitPoint(x: ${name}X, y: ${name}Y)"
         ValueType.Region -> "NativeMapRegionValue(latitude: ${name}Latitude, longitude: ${name}Longitude, latitudeSpan: ${name}LatitudeSpan, longitudeSpan: ${name}LongitudeSpan)"
         else -> name
     }
@@ -189,16 +193,27 @@ private fun Binding.kdoc(
 // @formatter:off
 private fun kotlinApi() = buildString {
     append("package me.zly2006.swiftui.nativeui\n\n")
-    append("/** Native dimensions in points.\n * @property width Horizontal extent in points.\n * @property height Vertical extent in points.\n * [GeometryProxy.size](https://developer.apple.com/documentation/swiftui/geometryproxy/size) in Apple Documentation\n */\ndata class NativeSize(val width: Double, val height: Double)\n")
-    for (enum in enums) {
+    append("/** Native dimensions in points.\n * @property width Horizontal extent in points.\n * @property height Vertical extent in points.\n * [GeometryProxy.size](https://developer.apple.com/documentation/swiftui/geometryproxy/size) in Apple Documentation\n */\ndata class CGSize(val width: Double, val height: Double)\n")
+    fun emitEnum(enum: EnumBinding) {
         val ref = if (enum.nativeMapping) ApiRef("SwiftUI", enum.swiftType.removePrefix("SwiftUI.")) else ApiRef(if (enum.name == "ChartMark") "Charts" else "SwiftUI", if (enum.name == "ChartMark") "Chart" else "PickerStyle")
-        append("/** Native options for ${enum.name}.\n * @property nativeValue Integer discriminator used by the typed native bridge.\n * [${ref.owner}](${ref.documentation()}) in Apple Documentation\n */\nenum class ${enum.name}(val nativeValue: Int) {\n")
-        enum.entries.forEachIndexed { i, entry -> append("    /** Selects the native `${entry.second}` option. */\n    ${entry.first}($i)${if (i == enum.entries.lastIndex) ";" else ","}\n") }
+        val typeName = enum.kotlinName.substringAfterLast('.')
+        append("/** Native options for ${enum.kotlinName}.\n * @property nativeValue Integer discriminator used by the typed native bridge.\n * [${ref.owner}](${ref.documentation()}) in Apple Documentation\n */\nenum class $typeName(val nativeValue: Int) {\n")
+        enum.entries.forEachIndexed { i, entry -> append("    /** Selects the native `${entry.second}` option. */\n    ${if (entry.first == "inline") "`inline`" else entry.first}($i)${if (i == enum.entries.lastIndex) ";" else ","}\n") }
+        append("}\n")
+    }
+    enums.filter { '.' !in it.kotlinName }.forEach { emitEnum(it) }
+    for ((owner, members) in enums.filter { '.' in it.kotlinName }.groupBy { it.kotlinName.substringBefore('.') }) {
+        append("/** Namespace for native $owner options.\n * [$owner](https://developer.apple.com/documentation/swiftui/${owner.lowercase()}) in Apple Documentation\n */\nobject $owner {\n")
+        members.forEach { emitEnum(it) }
+        if (owner == "Font") {
+            val styles = members.single { it.name == "TextStyle" }
+            for (entry in styles.entries) append("/** The native ${entry.second} semantic font. */\nval ${entry.second}: TextStyle = TextStyle.${entry.first}\n")
+        }
         append("}\n")
     }
     append("""
         /** A named native color or extended-sRGB color, resolved by SwiftUI.
-         * @property kind Internal native color discriminator; use named colors or [rgba].
+         * @property kind Internal native color discriminator; use named colors or the public RGB constructor.
          * @property red Extended-sRGB red component for custom colors.
          * @property green Extended-sRGB green component for custom colors.
          * @property blue Extended-sRGB blue component for custom colors.
@@ -207,23 +222,18 @@ private fun kotlinApi() = buildString {
          * [Color](https://developer.apple.com/documentation/swiftui/color) in Apple Documentation
          */
         @ConsistentCopyVisibility
-        data class NativeColor internal constructor(val kind: Int, val red: Double = 0.0, val green: Double = 0.0, val blue: Double = 0.0, val alpha: Double = 1.0, val opacity: Double = 1.0) {
+        data class Color internal constructor(val kind: Int, val red: Double = 0.0, val green: Double = 0.0, val blue: Double = 0.0, val alpha: Double = 1.0, val opacity: Double = 1.0) {
             init { require(red.isFinite() && green.isFinite() && blue.isFinite()); require(alpha.isFinite() && alpha in 0.0..1.0 && opacity.isFinite() && opacity in 0.0..1.0) }
+            /** Creates an extended-sRGB native color; opacity is between zero and one. */
+            constructor(red: Double, green: Double, blue: Double, opacity: Double = 1.0) : this(-1, red, green, blue, opacity)
             /** Returns this color with its opacity multiplier replaced by [value] in the range 0..1. */
             fun opacity(value: Double) = copy(opacity = value)
             /** Native named colors and custom color constructors. */
             companion object {
-                /** Creates an extended-sRGB color from finite RGB components and alpha in the range 0..1.
-                 * @param red Extended-sRGB red component.
-                 * @param green Extended-sRGB green component.
-                 * @param blue Extended-sRGB blue component.
-                 * @param alpha Base opacity between zero and one.
-                 */
-                fun rgba(red: Double, green: Double, blue: Double, alpha: Double = 1.0) = NativeColor(-1, red, green, blue, alpha)
     """.trimIndent() + "\n")
     namedColors.forEachIndexed { i, name ->
-        val description = if (name == "WindowBackground") "AppKit's adaptive window background color." else "SwiftUI's named $name color, resolved in the current native environment."
-        append("        /** $description */\n        val $name = NativeColor($i)\n")
+        val description = if (name == "windowBackground") "AppKit's adaptive window background color." else "SwiftUI's named $name color, resolved in the current native environment."
+        append("        /** $description */\n        val $name = Color($i)\n")
     }
     append("    }\n}\n\n")
     for (b in bindings) {
@@ -253,7 +263,7 @@ private fun composeComponents() = buildString {
             listOfNotNull(b.callback?.let { "${it.name}: ${it.kotlinType()}" }) + listOf("modifier: Modifier = Modifier") +
             if (b.children == Children.None) emptyList() else if (b.slots.isNotEmpty()) b.slots.map { "$it: @Composable () -> Unit" } else listOf("content: @Composable () -> Unit")
         append(b.kdoc("Renders the official native ${b.references.first().owner} capability using Compose state updates.", component = true))
-        append("@Composable\n${if (b.publicComponent) "" else "internal "}fun ${b.name}(${parameters.joinToString()}) {\n")
+        append("@Composable\n${if (b.publicComponent && b.modifier == null) "" else "internal "}fun ${b.name}(${parameters.joinToString()}) {\n")
         append("    val backend = LocalNativeUiBackend.current\n    val config = ${b.config()}\n")
         b.callback?.let { append("    val listener by rememberUpdatedState(${it.name})\n") }
         val callback = b.callback?.let { if (it.payload == null) ", { listener() }" else ", { listener(it) }" }.orEmpty()
@@ -299,7 +309,7 @@ private fun swiftBindings() = buildString {
     append("struct NativeColorValue: Equatable {\n    let kind: Int32\n    let red, green, blue, alpha, opacity: Double\n    var color: SwiftUI.Color {\n        let base: SwiftUI.Color\n        switch kind {\n        case -1: base = Color(.sRGB, red: red, green: green, blue: blue, opacity: alpha)\n")
     namedColors.forEachIndexed { i, name ->
         val swift = name.replaceFirstChar(Char::lowercase)
-        append("        case $i: base = ${if (name == "WindowBackground") "Color(nsColor: .windowBackgroundColor)" else ".$swift"}\n")
+        append("        case $i: base = ${if (name == "windowBackground") "Color(nsColor: .windowBackgroundColor)" else ".$swift"}\n")
     }
     append("        default: preconditionFailure(\"Invalid native color\")\n        }\n        return opacity == 1 ? base : base.opacity(opacity)\n    }\n}\n\n")
     for (b in bindings) {
@@ -346,7 +356,7 @@ private fun macosBindings() = buildString {
     append("@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)\npackage me.zly2006.swiftui.nativeui\n\nimport me.zly2006.swiftui.capi.*\nimport kotlinx.cinterop.*\n\n")
     for (callback in bindings.mapNotNull { it.callback }.distinctBy { it.cType() }) {
         val arguments = callback.payloadAbi()
-        append("private fun ${callback.cType()}(context: COpaquePointer?${arguments.joinToString("") { ", ${it.name}: ${when (it.c) { "const char*" -> "CPointer<ByteVar>?"; "int32_t" -> "Int"; else -> "Double" }}" }}) {\n    checkNativeUiMainThread()\n    val callback = checkNotNull(context).asStableRef<NativeCallback>().get()\n    callback.invoke(${when (callback.payload) { null -> "Unit"; ValueType.Text -> "checkNotNull(value).toKString()"; ValueType.Boolean -> "value != 0"; ValueType.Size -> "NativeSize(valueWidth, valueHeight)"; ValueType.Region -> "NativeMapRegion(valueLatitude, valueLongitude, valueLatitudeSpan, valueLongitudeSpan)"; ValueType.Color -> "NativeColor(valueKind, valueRed, valueGreen, valueBlue, valueAlpha, valueOpacity)"; else -> "value" }})\n}\n")
+        append("private fun ${callback.cType()}(context: COpaquePointer?${arguments.joinToString("") { ", ${it.name}: ${when (it.c) { "const char*" -> "CPointer<ByteVar>?"; "int32_t" -> "Int"; else -> "Double" }}" }}) {\n    checkNativeUiMainThread()\n    val callback = checkNotNull(context).asStableRef<NativeCallback>().get()\n    callback.invoke(${when (callback.payload) { null -> "Unit"; ValueType.Text -> "checkNotNull(value).toKString()"; ValueType.Boolean -> "value != 0"; ValueType.Size -> "CGSize(valueWidth, valueHeight)"; ValueType.Region -> "MKCoordinateRegion(CLLocationCoordinate2D(valueLatitude, valueLongitude), MKCoordinateSpan(valueLatitudeSpan, valueLongitudeSpan))"; ValueType.Color -> "Color(valueKind, valueRed, valueGreen, valueBlue, valueAlpha, valueOpacity)"; else -> "value" }})\n}\n")
     }
     append("/** SwiftUI backend for macOS. All operations require the Apple main thread.\n * @param pathCacheLimits Bounds for geometry retained by this backend.\n */\n")
     append("\nclass MacosNativeUiBackend(pathCacheLimits: NativePathCacheLimits = NativePathCacheLimits()) : BaseMacosNativeUiBackend(pathCacheLimits), NativeUiBackend {\n")
