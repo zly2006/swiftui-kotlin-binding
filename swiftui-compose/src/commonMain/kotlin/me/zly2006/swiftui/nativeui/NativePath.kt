@@ -32,6 +32,29 @@ sealed interface NativePathCommand {
     data object Close : NativePathCommand
 }
 
-data class NativePath(
-    val commands: List<NativePathCommand>,
-)
+/** Immutable geometry with a precomputed structural hash for native resource reuse. */
+class NativePath(
+    commands: List<NativePathCommand>,
+) {
+    private class Commands(
+        private val values: Array<NativePathCommand>,
+    ) : AbstractList<NativePathCommand>() {
+        override val size get() = values.size
+
+        override fun get(index: Int) = values[index]
+    }
+
+    val commands: List<NativePathCommand> = Commands(commands.toTypedArray())
+    private val structuralHash = this.commands.hashCode()
+
+    override fun hashCode() = structuralHash
+
+    override fun equals(other: Any?) =
+        this === other || other is NativePath && structuralHash == other.structuralHash && commands == other.commands
+
+    override fun toString() = "NativePath(commands=$commands)"
+
+    operator fun component1() = commands
+
+    fun copy(commands: List<NativePathCommand> = this.commands) = NativePath(commands)
+}

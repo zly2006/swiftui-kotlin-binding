@@ -2,7 +2,7 @@
 
 SwiftUI's generic views and content builders require adaptation for Kotlin/Native. The generator keeps the C ABI, Swift forwarding, Kotlin backend, and Composable declarations in sync.
 
-The maintained inputs are [Model.kt](../swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Model.kt), [Whitelist.kt](../swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Whitelist.kt), and [Emitter.kt](../swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Emitter.kt). The whitelist also records planned capabilities; it is the component inventory.
+The maintained inputs are [Model.kt](../swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Model.kt), [Whitelist.kt](../swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Whitelist.kt), and [Emitter.kt](../swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/Emitter.kt). The whitelist selects generated adapters. [ControlCatalog.kt](../swiftui-codegen/src/main/kotlin/me/zly2006/swiftui/generator/ControlCatalog.kt) separately records official components, platform availability, and usage in pinned open-source projects. Coverage counts components once, regardless of overloads or modifiers; adapter availability still requires native behavior verification.
 
 ## Add a capability
 
@@ -13,6 +13,7 @@ The maintained inputs are [Model.kt](../swiftui-codegen/src/main/kotlin/me/zly20
 
 ```sh
 ./gradlew :swiftui-codegen:showWhitelist
+./gradlew :swiftui-codegen:showCoverage
 ./gradlew :swiftui-codegen:generateBindings
 ```
 

@@ -12,6 +12,7 @@ private fun ValueType.kotlin(): String =
         ValueType.Boolean -> "Boolean"
         ValueType.Color -> "NativeColor"
         ValueType.Size -> "NativeSize"
+        ValueType.Region -> "NativeMapRegion"
         ValueType.Numbers -> "List<Double>"
         ValueType.Colors -> "List<NativeColor>"
         ValueType.Path -> "NativePath"
@@ -26,6 +27,7 @@ private fun ValueType.swift(): String =
         ValueType.Boolean -> "Bool"
         ValueType.Color -> "NativeColorValue"
         ValueType.Size -> "CGSize"
+        ValueType.Region -> "NativeMapRegionValue"
         ValueType.Numbers -> "[Double]"
         ValueType.Colors -> "[NativeColorValue]"
         ValueType.Path -> "SwiftUI.Path"
@@ -38,6 +40,7 @@ private data class AbiField(val name: String, val c: String, val swift: String, 
 
 // @formatter:off
 private fun Field.abi(): List<AbiField> = when (type) {
+    ValueType.Region -> listOf("latitude", "longitude", "latitudeSpan", "longitudeSpan").map { AbiField(name + it.replaceFirstChar(Char::uppercase), "double", "Double", "$name.$it") }
     ValueType.Path -> listOf(AbiField(name, "void*", "UnsafeMutableRawPointer", "${name}Handle"))
     ValueType.Numbers -> listOf(AbiField("${name}Values", "const double*", "UnsafePointer<Double>", "${name}Buffer"), AbiField("${name}Count", "int32_t", "Int32", "$name.size"))
     ValueType.Colors -> listOf(AbiField("${name}Kinds", "const int32_t*", "UnsafePointer<Int32>", "${name}KindsBuffer"), AbiField("${name}Components", "const double*", "UnsafePointer<Double>", "${name}ComponentsBuffer"), AbiField("${name}Count", "int32_t", "Int32", "$name.size"))
@@ -58,6 +61,7 @@ private fun Field.swiftArgument() =
         ValueType.OptionalNumber -> "$name.isNaN ? nil : $name"
         ValueType.Color -> "NativeColorValue(kind: ${name}Kind, red: ${name}Red, green: ${name}Green, blue: ${name}Blue, alpha: ${name}Alpha, opacity: ${name}Opacity)"
         ValueType.Size -> "CGSize(width: ${name}Width, height: ${name}Height)"
+        ValueType.Region -> "NativeMapRegionValue(latitude: ${name}Latitude, longitude: ${name}Longitude, latitudeSpan: ${name}LatitudeSpan, longitudeSpan: ${name}LongitudeSpan)"
         else -> name
     }
 
@@ -78,6 +82,8 @@ private fun Callback.swiftInvoke() =
         ValueType.Boolean -> "callback(context, value ? 1 : 0)"
         ValueType.Number -> "callback(context, value)"
         ValueType.Size -> "callback(context, value.width, value.height)"
+        ValueType.Region -> "callback(context, value.latitude, value.longitude, value.latitudeSpan, value.longitudeSpan)"
+        ValueType.Color -> "callback(context, value.kind, value.red, value.green, value.blue, value.alpha, value.opacity)"
         else -> error("Callback needs a semantic adapter: $payload")
     }
 
@@ -105,7 +111,7 @@ private fun header() =
     buildString {
         append("#pragma once\n#include <stdint.h>\ntypedef void* SUI_Node;\n")
         append(
-            "void* sui_path_create(void);\nvoid sui_path_move(void* path, double x, double y);\nvoid sui_path_line(void* path, double x, double y);\nvoid sui_path_curve(void* path, double x, double y, double c1x, double c1y, double c2x, double c2y);\nvoid sui_path_arc(void* path, double x, double y, double radius, double start, double end, int32_t clockwise);\nvoid sui_path_close(void* path);\nvoid sui_path_release(void* path);\n",
+            "void* sui_path_create(void);\nint32_t sui_path_live(void);\nint64_t sui_path_constructions(void);\nvoid sui_path_move(void* path, double x, double y);\nvoid sui_path_line(void* path, double x, double y);\nvoid sui_path_curve(void* path, double x, double y, double c1x, double c1y, double c2x, double c2y);\nvoid sui_path_arc(void* path, double x, double y, double radius, double start, double end, int32_t clockwise);\nvoid sui_path_close(void* path);\nvoid sui_path_release(void* path);\n",
         )
         bindings.mapNotNull { it.callback }.distinctBy { it.cType() }.forEach { callback ->
             append(
@@ -135,6 +141,8 @@ private fun header() =
             void sui_node_debug_boolean(SUI_Node node, int32_t value);
             void sui_node_debug_string(SUI_Node node, const char* value);
             void sui_node_debug_double(SUI_Node node, double value);
+            void sui_node_debug_color(SUI_Node node, int32_t valueKind, double valueRed, double valueGreen, double valueBlue, double valueAlpha, double valueOpacity);
+            void sui_node_debug_size(SUI_Node node, double valueWidth, double valueHeight);
             """.trimIndent() + "\n",
         )
     }
@@ -147,7 +155,7 @@ private fun kotlinApi() = buildString {
     append("""
         @ConsistentCopyVisibility
         data class NativeColor internal constructor(val kind: Int, val red: Double = 0.0, val green: Double = 0.0, val blue: Double = 0.0, val alpha: Double = 1.0, val opacity: Double = 1.0) {
-            init { require(listOf(red, green, blue, alpha, opacity).all { it.isFinite() && it in 0.0..1.0 }) }
+            init { require(red.isFinite() && green.isFinite() && blue.isFinite()); require(alpha.isFinite() && alpha in 0.0..1.0 && opacity.isFinite() && opacity in 0.0..1.0) }
             fun opacity(value: Double) = copy(opacity = value)
             companion object {
                 fun rgba(red: Double, green: Double, blue: Double, alpha: Double = 1.0) = NativeColor(-1, red, green, blue, alpha)
@@ -156,7 +164,9 @@ private fun kotlinApi() = buildString {
     append("    }\n}\n\n")
     for (b in bindings) {
         if (b.fields.isEmpty()) append("data object ${b.name}Config\n") else {
-            append("data class ${b.name}Config(${b.fields.joinToString { "val ${it.name}: ${it.type.kotlin()}" }})\n")
+            append("data class ${b.name}Config(${b.fields.joinToString { "val ${it.name}: ${it.type.kotlin()}" }})")
+            if (b.validation.isNotEmpty()) append(" { init { ${b.validation.joinToString("; ") { "require($it)" }} } }")
+            append("\n")
         }
     }
     append("\ninterface NativeUiBackend : NativeTreeBackend {\n")
@@ -174,13 +184,14 @@ private fun composeComponents() = buildString {
     for (b in bindings.filter { it.name != "Root" }) {
         val parameters = b.fields.map { "${it.name}: ${it.type.kotlin()}${it.default?.let { d -> " = $d" }.orEmpty()}" } +
             listOfNotNull(b.callback?.let { "${it.name}: ${it.kotlinType()}" }) + listOf("modifier: NativeModifier = NativeModifier") +
-            if (b.children == Children.None) emptyList() else listOf("content: @Composable () -> Unit")
+            if (b.children == Children.None) emptyList() else if (b.slots.isNotEmpty()) b.slots.map { "$it: @Composable () -> Unit" } else listOf("content: @Composable () -> Unit")
         append("@Composable\nfun ${b.name}(${parameters.joinToString()}) {\n")
         append("    val backend = LocalNativeUiBackend.current\n    val config = ${b.config()}\n")
         b.callback?.let { append("    val listener by rememberUpdatedState(${it.name})\n") }
         val callback = b.callback?.let { if (it.payload == null) ", { listener() }" else ", { listener(it) }" }.orEmpty()
         append("    modifier.wrap {\n        ComposeNode<UiNode, NativeUiApplier>(\n            factory = { UiNode(backend, backend.create${b.name}(config$callback)) },\n            update = { set(config) { backend.update${b.name}(element, it) } },\n")
-        append("            content = ${if (b.children == Children.None) "{}" else "content"},\n        )\n    }\n}\n\n")
+        val childContent = if (b.children == Children.None) "{}" else if (b.slots.isNotEmpty()) "{ ${b.slots.joinToString("; ") { "Group(content = $it)" }} }" else "content"
+        append("            content = $childContent,\n        )\n    }\n}\n\n")
         b.modifier?.let { modifier ->
             val fields = (b.fields.map { "${it.name}: ${it.type.kotlin()}${it.default?.let { d -> " = $d" }.orEmpty()}" } + listOfNotNull(b.callback?.let { "${it.name}: ${it.kotlinType()}" })).joinToString()
             val arguments = (b.fields.map { "${it.name} = ${it.name}" } + listOfNotNull(b.callback?.let { "${it.name} = ${it.name}" }) + "content = content").joinToString()
@@ -194,7 +205,15 @@ private fun composeComponents() = buildString {
 // @formatter:off
 private fun swiftBindings() = buildString {
     append("import SwiftUI\nimport Observation\n\n")
-    for (enum in enums) {
+    bindings
+        .asSequence()
+        .flatMap { it.references }
+        .map { it.module }
+        .filter { it !in setOf("SwiftUI", "SwiftUICore") }
+        .toSortedSet()
+        .toList()
+        .forEach { append("import $it\n") }
+    for (enum in enums.filter { it.nativeMapping }) {
         append("func nativeUi${enum.name}(_ value: Int32) -> ${enum.swiftType} {\n    switch value {\n")
         enum.entries.forEachIndexed { i, entry -> append("    case $i: return .${entry.second}\n") }
         append("    default: preconditionFailure(\"Invalid ${enum.name}\")\n    }\n}\n")
@@ -211,15 +230,18 @@ private fun swiftBindings() = buildString {
         append("struct $config: Equatable {\n${b.fields.joinToString("") { "    let ${it.name}: ${it.type.swift()}\n" }}}\n")
         append("@Observable final class ${b.name}Properties {\n    var configuration: $config\n    init(_ configuration: $config) { self.configuration = configuration }\n}\n")
         append("final class ${b.name}Node: NativeNode {\n    let properties: ${b.name}Properties\n")
+        b.storage.forEach { append("    let ${it.name}: ${it.type} = ${it.initializer}\n") }
         if (callback != null) append("    let relay: NativeRelay<${callback.swiftPayload()}>\n")
         append("    init(_ configuration: $config${callback?.let { ", relay: NativeRelay<${it.swiftPayload()}>" }.orEmpty()}) {\n        properties = ${b.name}Properties(configuration)\n")
         if (callback != null) append("        self.relay = relay\n")
         append("        super.init(childPolicy: ${when (b.children) { Children.None -> 0; Children.One -> 1; Children.Many -> -1 }})\n")
-        if (callback != null) append("        deactivate = { relay.active = false }\n")
+        val deactivate = listOfNotNull(if (callback != null) "relay.active = false" else null) + b.storage.mapNotNull { it.dispose }
+        if (deactivate.isNotEmpty()) append("        deactivate = { [${(listOfNotNull(if (callback != null) "relay" else null) + b.storage.map { it.name }).joinToString()}] in ${deactivate.joinToString("; ")} }\n")
         append("    }\n    override var nativeView: AnyView { AnyView(${b.name}NativeView(node: self)) }\n}\n")
         val body = enums.fold(b.body) { expression, enum -> expression.replace("native${enum.name}(", "nativeUi${enum.name}(") }
         val configurationRead = if ("c." in body) "        let c = node.properties.configuration\n" else ""
-        append("struct ${b.name}NativeView: View {\n    let node: ${b.name}Node\n    @ViewBuilder var body: some View {\n        let _ = recordNativeBodyEvaluation()\n$configurationRead${body.lines().joinToString("\n") { "        $it" }}\n    }\n}\n")
+        val availableBody = b.macosMajor?.let { "if #available(macOS $it, *) {\n$body\n} else { preconditionFailure(\"Native component requires macOS $it\") }" } ?: body
+        append("struct ${b.name}NativeView: View {\n    let node: ${b.name}Node\n    @ViewBuilder var body: some View {\n        let _ = recordNativeBodyEvaluation()\n$configurationRead${availableBody.lines().joinToString("\n") { "        $it" }}\n    }\n}\n")
         val fields = b.fields.flatMap { it.abi() }
         val signature = fields.map { "_ ${it.name}: ${it.swift}" } + callback?.let { listOf("_ callback: @escaping @convention(c) (UnsafeMutableRawPointer?${it.payloadAbi().joinToString("") { field -> ", ${field.swift}" }}) -> Void", "_ context: UnsafeMutableRawPointer?") }.orEmpty()
         val configCreate = "$config(${b.fields.joinToString { "${it.name}: ${it.swiftArgument()}" }})"
@@ -227,6 +249,16 @@ private fun swiftBindings() = buildString {
         if (callback != null) append("    let relay = NativeRelay<${callback.swiftPayload()}> { value in ${callback.swiftInvoke()} }\n")
         append("    return retainNativeNode(${b.name}Node($configCreate${if (callback != null) ", relay: relay" else ""}))\n}\n")
         append("@_cdecl(\"sui_node_${b.abi}_update\")\npublic func nodeUpdate${b.name}(${(listOf("_ pointer: UnsafeMutableRawPointer") + fields.map { "_ ${it.name}: ${it.swift}" }).joinToString()}) {\n    let node = checkedNativeNode(pointer, ${b.name}Node.self)\n    let configuration = $configCreate\n    if node.properties.configuration != configuration { node.properties.configuration = configuration; recordNativePropertyUpdate() }\n}\n\n")
+    }
+    for (payload in listOf(null, ValueType.Boolean, ValueType.Text, ValueType.Number, ValueType.Color, ValueType.Size)) {
+        val suffix = when (payload) { null -> "action"; ValueType.Boolean -> "boolean"; ValueType.Text -> "string"; ValueType.Number -> "double"; ValueType.Color -> "color"; else -> "size" }
+        val fields = payload?.let { Field("value", it).abi() }.orEmpty()
+        val value = payload?.let { Field("value", it).swiftArgument() } ?: "()"
+        append("@_cdecl(\"sui_node_debug_$suffix\")\npublic func nativeDebug_$suffix(_ pointer: UnsafeMutableRawPointer${fields.joinToString("") { ", _ ${it.name}: ${it.swift}" }}) {\n    let raw = checkedNativeNode(pointer, NativeNode.self)\n    switch raw {\n")
+        for (binding in bindings.filter { it.callback != null && it.callback.payload == payload }) {
+            append("    case let node as ${binding.name}Node: node.relay.fire($value)\n")
+        }
+        append("    default: preconditionFailure(\"Unsupported native callback payload\")\n    }\n}\n")
     }
 }
 // @formatter:on
@@ -236,39 +268,46 @@ private fun macosBindings() = buildString {
     append("@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)\npackage me.zly2006.swiftui.nativeui\n\nimport me.zly2006.swiftui.capi.*\nimport kotlinx.cinterop.*\n\n")
     for (callback in bindings.mapNotNull { it.callback }.distinctBy { it.cType() }) {
         val arguments = callback.payloadAbi()
-        append("private fun ${callback.cType()}(context: COpaquePointer?${arguments.joinToString("") { ", ${it.name}: ${when (it.c) { "const char*" -> "CPointer<ByteVar>?"; "int32_t" -> "Int"; else -> "Double" }}" }}) {\n    checkNativeUiMainThread()\n    val callback = checkNotNull(context).asStableRef<NativeCallback>().get()\n    callback.invoke(${when (callback.payload) { null -> "Unit"; ValueType.Text -> "checkNotNull(value).toKString()"; ValueType.Boolean -> "value != 0"; ValueType.Size -> "NativeSize(valueWidth, valueHeight)"; else -> "value" }})\n}\n")
+        append("private fun ${callback.cType()}(context: COpaquePointer?${arguments.joinToString("") { ", ${it.name}: ${when (it.c) { "const char*" -> "CPointer<ByteVar>?"; "int32_t" -> "Int"; else -> "Double" }}" }}) {\n    checkNativeUiMainThread()\n    val callback = checkNotNull(context).asStableRef<NativeCallback>().get()\n    callback.invoke(${when (callback.payload) { null -> "Unit"; ValueType.Text -> "checkNotNull(value).toKString()"; ValueType.Boolean -> "value != 0"; ValueType.Size -> "NativeSize(valueWidth, valueHeight)"; ValueType.Region -> "NativeMapRegion(valueLatitude, valueLongitude, valueLatitudeSpan, valueLongitudeSpan)"; ValueType.Color -> "NativeColor(valueKind, valueRed, valueGreen, valueBlue, valueAlpha, valueOpacity)"; else -> "value" }})\n}\n")
     }
-    append("\nclass MacosNativeUiBackend : BaseMacosNativeUiBackend(), NativeUiBackend {\n")
+    append("\nclass MacosNativeUiBackend(pathCacheLimits: NativePathCacheLimits = NativePathCacheLimits()) : BaseMacosNativeUiBackend(pathCacheLimits), NativeUiBackend {\n")
     for (b in bindings) {
         val callback = b.callback
         val ffiArgs = b.fields.flatMap { it.abi() }.joinToString { it.kotlin.replace(Regex("\\b(${b.fields.joinToString("|") { field -> field.name }})\\b")) { match -> "config.${match.value}" } }
         append("    override fun create${b.name}(config: ${b.name}Config${callback?.let { ", ${it.name}: ${it.kotlinType()}" }.orEmpty()}): NativeUiElement {\n        checkNativeUiMainThread()\n")
+        b.macosMajor?.let { append("        requireNativeMacosVersion($it)\n") }
         val arrays = b.fields.filter { it.type == ValueType.Numbers || it.type == ValueType.Colors || it.type == ValueType.Path }
         fun buffers() = buildString {
             for (field in arrays) {
                 val n = field.name
                 if (field.type == ValueType.Path) {
-                    append("            val ${n}Handle = buildNativePath(config.$n)\n")
+                    // Borrowed by the enclosing backend-owned path scope.
                 } else if (field.type == ValueType.Numbers) {
                     append("            val ${n}Buffer = allocArray<DoubleVar>(config.$n.size.coerceAtLeast(1))\n")
                     append("            config.$n.forEachIndexed { i, value -> ${n}Buffer[i] = value }\n")
                 } else {
                     append("            val ${n}KindsBuffer = allocArray<IntVar>(config.$n.size.coerceAtLeast(1))\n")
                     append("            val ${n}ComponentsBuffer = allocArray<DoubleVar>((config.$n.size * 5).coerceAtLeast(1))\n")
-                    append("            config.$n.forEachIndexed { i, color -> ${n}KindsBuffer[i] = color.kind; listOf(color.red, color.green, color.blue, color.alpha, color.opacity).forEachIndexed { j, value -> ${n}ComponentsBuffer[i * 5 + j] = value } }\n")
+                    append("            config.$n.forEachIndexed { i, color -> val offset = i * 5; ${n}KindsBuffer[i] = color.kind; ${n}ComponentsBuffer[offset] = color.red; ${n}ComponentsBuffer[offset + 1] = color.green; ${n}ComponentsBuffer[offset + 2] = color.blue; ${n}ComponentsBuffer[offset + 3] = color.alpha; ${n}ComponentsBuffer[offset + 4] = color.opacity }\n")
                 }
             }
         }
         val paths = arrays.filter { it.type == ValueType.Path }
-        val releasePaths = paths.joinToString("; ") { "sui_path_release(${it.name}Handle)" }
+        fun pathScope(body: String): String = paths.asReversed().fold(body) { nested, field ->
+            "withNativePath(config.${field.name}) { ${field.name}Handle ->\n$nested\n}"
+        }
+        fun nativeScope(operation: String): String {
+            val scoped = if (arrays.any { it.type != ValueType.Path }) "memScoped {\n${buffers()}$operation\n}" else operation
+            return pathScope(scoped)
+        }
         if (callback != null) {
             check(arrays.isEmpty()) { "Collection callback adapters require explicit ownership support" }
             append("        return ownCallback(\"${b.name}\", NativeCallback { ${callback.name}(${if (callback.payload == null) "" else "it as ${callback.payload.kotlin()}"}) }) { context ->\n            checkNotNull(sui_node_${b.abi}_create($ffiArgs${if (ffiArgs.isEmpty()) "" else ", "}staticCFunction(::${callback.cType()}), context))\n        }\n")
         } else if (arrays.isNotEmpty()) {
-            append("        return memScoped {\n${buffers()}            try { own(\"${b.name}\") { checkNotNull(sui_node_${b.abi}_create($ffiArgs)) } } finally { $releasePaths }\n        }\n")
+            append("        return ${nativeScope("own(\"${b.name}\") { checkNotNull(sui_node_${b.abi}_create($ffiArgs)) }")}\n")
         } else append("        return own(\"${b.name}\") { checkNotNull(sui_node_${b.abi}_create($ffiArgs)) }\n")
         append("    }\n    override fun update${b.name}(element: NativeUiElement, config: ${b.name}Config) {\n")
-        if (arrays.isNotEmpty()) append("        memScoped {\n${buffers()}            try { sui_node_${b.abi}_update(checked(element, \"${b.name}\")${if (ffiArgs.isEmpty()) "" else ", "}$ffiArgs) } finally { $releasePaths }\n        }\n")
+        if (arrays.isNotEmpty()) append("        ${nativeScope("sui_node_${b.abi}_update(checked(element, \"${b.name}\")${if (ffiArgs.isEmpty()) "" else ", "}$ffiArgs)")}\n")
         else append("        sui_node_${b.abi}_update(checked(element, \"${b.name}\")${if (ffiArgs.isEmpty()) "" else ", "}$ffiArgs)\n")
         append("    }\n")
     }

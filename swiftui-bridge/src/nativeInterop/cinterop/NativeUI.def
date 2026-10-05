@@ -1,4 +1,4 @@
 headers = NativeUI.h
 headerFilter = NativeUI.h
 package = me.zly2006.swiftui.capi
-linkerOpts = -L/usr/lib/swift -framework SwiftUI -framework AppKit -framework Foundation
+linkerOpts = -L/usr/lib/swift -framework SwiftUI -framework AppKit -framework Foundation -framework MapKit -framework Charts -framework AVFoundation -needed_framework AVKit

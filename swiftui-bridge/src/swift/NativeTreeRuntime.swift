@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Observation
+import MapKit
 
 private var nodeCount: Int32 = 0
 private var hostCount: Int32 = 0
@@ -11,6 +12,10 @@ func requireNativeMainThread() { precondition(Thread.isMainThread, "Native UI re
 func recordNativePropertyUpdate() { propertyUpdates += 1 }
 func recordNativeBodyEvaluation() { bodyEvaluations += 1 }
 func optionalNumber(_ value: Double?) -> CGFloat? { value.map { CGFloat($0) } }
+func nativeColorComponents(_ value: SwiftUI.Color) -> NativeColorValue {
+    guard let rgb = NSColor(value).usingColorSpace(.sRGB) else { preconditionFailure("Unable to resolve native color") }
+    return NativeColorValue(kind: -1, red: rgb.redComponent, green: rgb.greenComponent, blue: rgb.blueComponent, alpha: rgb.alphaComponent, opacity: 1)
+}
 
 @Observable final class NativeChildList { var items: [NativeNode] = [] }
 class NativeNode: Identifiable {
@@ -33,6 +38,15 @@ struct NativeChildren: View {
     let node: NativeNode
     var body: some View {
         ForEach(node.children.items) { child in child.nativeView }
+    }
+}
+struct NativeChildSlot: View {
+    let node: NativeNode
+    let index: Int
+    @ViewBuilder var body: some View {
+        if node.children.items.indices.contains(index) {
+            node.children.items[index].nativeView
+        }
     }
 }
 final class NativeRelay<Value> {
@@ -115,12 +129,6 @@ public func releaseNativeTreeHost(_ pointer: UnsafeMutableRawPointer) {
 @_cdecl("sui_tree_property_updates") public func nativeTreePropertyUpdates() -> Int64 { requireNativeMainThread(); return propertyUpdates }
 @_cdecl("sui_tree_body_evaluations") public func nativeTreeBodyEvaluations() -> Int64 { requireNativeMainThread(); return bodyEvaluations }
 
-// Diagnostics exercise the same relays as official controls, without injecting system input.
-@_cdecl("sui_node_debug_action") public func nativeDebugAction(_ pointer: UnsafeMutableRawPointer) { checkedNativeNode(pointer, ButtonNode.self).relay.fire(()) }
-@_cdecl("sui_node_debug_boolean") public func nativeDebugBoolean(_ pointer: UnsafeMutableRawPointer, _ value: Int32) { checkedNativeNode(pointer, ToggleNode.self).relay.fire(value != 0) }
-@_cdecl("sui_node_debug_string") public func nativeDebugString(_ pointer: UnsafeMutableRawPointer, _ value: UnsafePointer<CChar>) { checkedNativeNode(pointer, TextFieldNode.self).relay.fire(String(cString: value)) }
-@_cdecl("sui_node_debug_double") public func nativeDebugDouble(_ pointer: UnsafeMutableRawPointer, _ value: Double) { checkedNativeNode(pointer, SliderNode.self).relay.fire(value) }
-
 // Swift's TabContent cannot be erased as View. This adapter only bridges official Tab APIs.
 struct NativeSingleTab: TabContent {
     typealias TabValue = String
@@ -148,7 +156,63 @@ struct NativeSidebarTabView: View {
     }
 }
 
-private final class NativePathBox { var value = SwiftUI.Path() }
+struct NativeStandardTabView: View {
+    let node: TabViewNode
+    var body: some View {
+        TabView(selection: Binding(get: { node.properties.configuration.selection }, set: { node.relay.fire($0) })) {
+            ForEach(node.children.items) { child in
+                if let section = child as? TabSectionNode {
+                    TabSection(section.properties.configuration.title) {
+                        ForEach(section.children.items) { tab in NativeSingleTab(node: tab as! TabNode) }
+                    }
+                } else {
+                    NativeSingleTab(node: child as! TabNode)
+                }
+            }
+        }
+    }
+}
+
+private struct NativeTableValue: Identifiable {
+    let node: TableRowNode
+    var id: String { node.properties.configuration.identifier }
+}
+struct NativeTable: View {
+    let node: TableNode
+    var body: some View {
+        let c = node.properties.configuration
+        let columns = node.children.items[0].children.items.compactMap { $0 as? TableColumnNode }
+        let rows = node.children.items[1].children.items.compactMap { $0 as? TableRowNode }.map { NativeTableValue(node: $0) }
+        SwiftUI.Table(rows, selection: Binding<String?>(get: { c.selection.isEmpty ? nil : c.selection }, set: { node.relay.fire($0 ?? "") })) {
+            TableColumnForEach(columns) { column in
+                TableColumn(column.properties.configuration.title) { (row: NativeTableValue) in
+                    NativeTableCell(row: row.node, column: column.properties.configuration.identifier)
+                }
+            }
+        }
+    }
+}
+private struct NativeTableCell: View {
+    let row: TableRowNode
+    let column: String
+    @ViewBuilder var body: some View {
+        ForEach(row.children.items) { child in
+            if let cell = child as? TableCellNode, cell.properties.configuration.column == column {
+                NativeChildren(node: cell)
+            }
+        }
+    }
+}
+
+private var nativePathBoxCount: Int32 = 0
+private var nativePathConstructionCount: Int64 = 0
+private final class NativePathBox {
+    var value = SwiftUI.Path()
+    init() { nativePathBoxCount += 1; nativePathConstructionCount += 1 }
+    deinit { nativePathBoxCount -= 1 }
+}
+@_cdecl("sui_path_live") public func nativePathLiveCount() -> Int32 { requireNativeMainThread(); return nativePathBoxCount }
+@_cdecl("sui_path_constructions") public func nativePathConstructionTotal() -> Int64 { requireNativeMainThread(); return nativePathConstructionCount }
 private func nativePathBox(_ pointer: UnsafeMutableRawPointer) -> NativePathBox { requireNativeMainThread(); return Unmanaged<NativePathBox>.fromOpaque(pointer).takeUnretainedValue() }
 func copiedNativePath(_ pointer: UnsafeMutableRawPointer) -> SwiftUI.Path { nativePathBox(pointer).value }
 @_cdecl("sui_path_create") public func pathCreate() -> UnsafeMutableRawPointer { requireNativeMainThread(); return Unmanaged.passRetained(NativePathBox()).toOpaque() }
@@ -158,3 +222,14 @@ func copiedNativePath(_ pointer: UnsafeMutableRawPointer) -> SwiftUI.Path { nati
 @_cdecl("sui_path_arc") public func pathArc(_ pointer: UnsafeMutableRawPointer, _ x: Double, _ y: Double, _ radius: Double, _ start: Double, _ end: Double, _ clockwise: Int32) { nativePathBox(pointer).value.addArc(center: CGPoint(x: x, y: y), radius: radius, startAngle: .degrees(start), endAngle: .degrees(end), clockwise: clockwise != 0) }
 @_cdecl("sui_path_close") public func pathClose(_ pointer: UnsafeMutableRawPointer) { nativePathBox(pointer).value.closeSubpath() }
 @_cdecl("sui_path_release") public func pathRelease(_ pointer: UnsafeMutableRawPointer) { requireNativeMainThread(); Unmanaged<NativePathBox>.fromOpaque(pointer).release() }
+
+struct NativeMapRegionValue: Equatable {
+    let latitude, longitude, latitudeSpan, longitudeSpan: Double
+    init(latitude: Double, longitude: Double, latitudeSpan: Double, longitudeSpan: Double) {
+        self.latitude = latitude; self.longitude = longitude; self.latitudeSpan = latitudeSpan; self.longitudeSpan = longitudeSpan
+    }
+    init(_ value: MKCoordinateRegion) {
+        self.init(latitude: value.center.latitude, longitude: value.center.longitude, latitudeSpan: value.span.latitudeDelta, longitudeSpan: value.span.longitudeDelta)
+    }
+    var region: MKCoordinateRegion { MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: latitude, longitude: longitude), span: MKCoordinateSpan(latitudeDelta: latitudeSpan, longitudeDelta: longitudeSpan)) }
+}

@@ -3,7 +3,6 @@
 package me.zly2006.swiftui.nativeui
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -13,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 private class NativeRecorder {
@@ -71,6 +71,19 @@ private class NativeRecorder {
 }
 
 class NativeCompositionTest {
+    @Test fun invalidControlInputsFailBeforeNativeCalls() {
+        assertFailsWith<IllegalArgumentException> { LazyVGridConfig(0.0, 8.0, 0.0) }
+        assertFailsWith<IllegalArgumentException> { LazyHGridConfig(1.5, 8.0, 0.0) }
+        assertFailsWith<IllegalArgumentException> { SliderConfig(0.0, 10.0, 1.0) }
+        assertFailsWith<IllegalArgumentException> { StepperConfig("Count", 1.0, 0.0, 100.0, 0.0) }
+        assertFailsWith<IllegalArgumentException> { GaugeConfig("Progress", Double.NaN, 0.0, 1.0) }
+        assertFailsWith<IllegalArgumentException> { DatePickerConfig("Date", Double.POSITIVE_INFINITY, true, true) }
+        assertFailsWith<IllegalArgumentException> { DatePickerConfig("Date", 0.0, date = false, time = false) }
+        assertFailsWith<IllegalArgumentException> { AsyncImageConfig("https://example.com/image.png", 0.0, false) }
+        assertFailsWith<IllegalArgumentException> { TimelineViewConfig(-1.0, false) }
+        assertFailsWith<IllegalArgumentException> { ChartConfig(listOf(0.0), emptyList(), ChartMark.Line, "x", "y") }
+    }
+
     @Test fun drawingUpdatesPreserveNodesAndHoverUsesLatestCallback() =
         runTest {
             val recorder = NativeRecorder()
@@ -164,7 +177,7 @@ class NativeCompositionTest {
             val recorder = NativeRecorder()
             var ids by mutableStateOf(listOf("a", "b", "c"))
             val composition = NativeComposition(recorder.backend, StandardTestDispatcher(testScheduler))
-            composition.setContent { Column { ids.forEach { id -> key(id) { Text(id) } } } }
+            composition.setContent { Column { ForEach(ids, { it }) { Text(it) } } }
             runCurrent()
             val column = recorder.all.single { it.kind == "Column" }
             val original = column.children.toList()

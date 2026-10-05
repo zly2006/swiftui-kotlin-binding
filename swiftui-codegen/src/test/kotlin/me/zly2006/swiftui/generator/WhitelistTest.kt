@@ -10,6 +10,18 @@ import kotlin.test.assertTrue
 
 // @formatter:off
 class WhitelistTest {
+    @Test fun coverageUsesIndependentComponentsAndRequiresAllAdapters() {
+        assertEquals(nativeUiCatalog.size, nativeUiCatalog.map { it.name }.toSet().size)
+        assertTrue(nativeUiCatalog.size > componentWhitelist.size)
+        val selected = bindings.map { it.name }.toSet() + kotlinCompositionHelpers
+        val available = availableComponents(selected)
+        assertTrue(available.size >= (nativeUiCatalog.size * 7 + 9) / 10)
+        assertEquals(available, availableComponents(selected + setOf("NewModifier", "AnotherTextOverload")))
+        assertFalse(availableComponents(selected - "ResourceImage").any { it.name == "Image" })
+        assertFalse(availableComponents(selected - "ForEach").any { it.name == "ForEach" })
+        assertFalse(available.any { it.partial || it.name == "EditButton" })
+        assertTrue(nativeUiCatalog.all { it.documentation.startsWith("https://developer.apple.com/documentation/") })
+    }
     @Test fun unlistedDefinitionDoesNotExportAnApi() {
         val privateCandidate = Binding("UnreviewedControl", emptyList(), body = "SwiftUI.EmptyView()", references = emptyList())
         assertFalse(selectedBindings(adapterDefinitions + privateCandidate).any { it.name == privateCandidate.name })
@@ -27,7 +39,7 @@ class WhitelistTest {
             names.forEach { assertContentEquals(first.resolve(it).readBytes(), second.resolve(it).readBytes()) }
             val header = first.resolve("include/NativeUI.h").readText()
             assertEquals(bindings.size, Regex("SUI_Node sui_node_[a-z_]+_create").findAll(header).count())
-            assertTrue(first.resolve("deferred-capabilities.tsv").readText().contains("Picker"))
+            assertTrue(first.resolve("deferred-capabilities.tsv").readText().contains("OutlineGroup"))
         } finally { first.deleteRecursively(); second.deleteRecursively() }
     }
 }

@@ -6,6 +6,7 @@ fun main(args: Array<String>) {
     when (args.firstOrNull()) {
         "generate" -> generate(File(args[1]))
         "whitelist" -> printWhitelist()
-        else -> error("Usage: generate <output-directory> | whitelist")
+        "coverage" -> printControlCoverage()
+        else -> error("Usage: generate <output-directory> | whitelist | coverage")
     }
 }

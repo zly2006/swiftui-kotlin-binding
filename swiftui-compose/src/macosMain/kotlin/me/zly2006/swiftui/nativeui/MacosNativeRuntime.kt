@@ -6,16 +6,20 @@ import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.interpretObjCPointer
 import kotlinx.cinterop.rawValue
+import kotlinx.cinterop.useContents
 import me.zly2006.swiftui.bridge.requireNativeMainThread
 import me.zly2006.swiftui.capi.sui_node_clear
 import me.zly2006.swiftui.capi.sui_node_debug_action
 import me.zly2006.swiftui.capi.sui_node_debug_boolean
+import me.zly2006.swiftui.capi.sui_node_debug_color
 import me.zly2006.swiftui.capi.sui_node_debug_double
 import me.zly2006.swiftui.capi.sui_node_debug_string
 import me.zly2006.swiftui.capi.sui_node_insert
 import me.zly2006.swiftui.capi.sui_node_move
 import me.zly2006.swiftui.capi.sui_node_release
 import me.zly2006.swiftui.capi.sui_node_remove
+import me.zly2006.swiftui.capi.sui_path_live
+import me.zly2006.swiftui.capi.sui_path_release
 import me.zly2006.swiftui.capi.sui_tree_body_evaluations
 import me.zly2006.swiftui.capi.sui_tree_host_create
 import me.zly2006.swiftui.capi.sui_tree_host_release
@@ -23,13 +27,23 @@ import me.zly2006.swiftui.capi.sui_tree_live_hosts
 import me.zly2006.swiftui.capi.sui_tree_live_nodes
 import me.zly2006.swiftui.capi.sui_tree_property_updates
 import platform.AppKit.NSView
+import platform.Foundation.NSProcessInfo
 
 // @formatter:off
 internal fun checkNativeUiMainThread() = requireNativeMainThread()
 internal class NativeCallback(val invoke: (Any) -> Unit)
 private class MacosElement(val owner: BaseMacosNativeUiBackend, val kind: String, var pointer: COpaquePointer?, val callback: StableRef<NativeCallback>?) : NativeUiElement
 
-abstract class BaseMacosNativeUiBackend : NativeTreeBackend, AutoCloseable {
+abstract class BaseMacosNativeUiBackend(pathCacheLimits: NativePathCacheLimits = NativePathCacheLimits()) : NativeTreeBackend, AutoCloseable {
+    private val paths = BoundedResourceCache<NativePath, COpaquePointer>(pathCacheLimits.maxEntries, pathCacheLimits.maxCommands, ::buildNativePath, ::sui_path_release)
+    internal fun <R> withNativePath(spec: NativePath, block: (COpaquePointer) -> R): R {
+        checkNativeUiMainThread(); check(!closed)
+        return paths.use(spec, spec.commands.size, block)
+    }
+    fun pathCacheStatistics(): NativePathCacheStatistics {
+        checkNativeUiMainThread()
+        return NativePathCacheStatistics(paths.hits, paths.constructions, paths.evictions, paths.size, paths.weight)
+    }
     private val owned = linkedSetOf<MacosElement>()
     var createdCount = 0; private set
     var releasedCount = 0; private set
@@ -63,14 +77,16 @@ abstract class BaseMacosNativeUiBackend : NativeTreeBackend, AutoCloseable {
     }
     fun createHost(root: NativeUiElement): NativeRootView = NativeRootView(checkNotNull(sui_tree_host_create(checked(root))))
     fun debugElements(kind: String): List<NativeUiElement> { checkNativeUiMainThread(); return owned.filter { it.kind == kind } }
-    fun debugAction(element: NativeUiElement) = sui_node_debug_action(checked(element, "Button"))
-    fun debugBoolean(element: NativeUiElement, value: Boolean) = sui_node_debug_boolean(checked(element, "Toggle"), if (value) 1 else 0)
-    fun debugString(element: NativeUiElement, value: String) = sui_node_debug_string(checked(element, "TextField"), value)
-    fun debugDouble(element: NativeUiElement, value: Double) = sui_node_debug_double(checked(element, "Slider"), value)
+    fun debugAction(element: NativeUiElement) = sui_node_debug_action(checked(element))
+    fun debugBoolean(element: NativeUiElement, value: Boolean) = sui_node_debug_boolean(checked(element), if (value) 1 else 0)
+    fun debugString(element: NativeUiElement, value: String) = sui_node_debug_string(checked(element), value)
+    fun debugDouble(element: NativeUiElement, value: Double) = sui_node_debug_double(checked(element), value)
+    fun debugColor(element: NativeUiElement, color: NativeColor) = sui_node_debug_color(checked(element), color.kind, color.red, color.green, color.blue, color.alpha, color.opacity)
     override fun close() {
         if (closed) return
         checkNativeUiMainThread()
         check(owned.isEmpty()) { "Dispose the owning composition before closing its backend" }
+        paths.close()
         closed = true
     }
 }
@@ -83,3 +99,13 @@ fun nativeHostCount(): Int { checkNativeUiMainThread(); return sui_tree_live_hos
 fun nativePropertyUpdates(): Long { checkNativeUiMainThread(); return sui_tree_property_updates() }
 fun nativeBodyEvaluations(): Long { checkNativeUiMainThread(); return sui_tree_body_evaluations() }
 // @formatter:on
+
+fun nativePathResourceCount(): Int {
+    checkNativeUiMainThread()
+    return sui_path_live()
+}
+
+internal fun requireNativeMacosVersion(major: Int) {
+    val current = NSProcessInfo.processInfo.operatingSystemVersion.useContents { majorVersion.toInt() }
+    require(current >= major) { "Native component requires macOS $major or later" }
+}

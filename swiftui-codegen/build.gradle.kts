@@ -21,3 +21,10 @@ tasks.register<JavaExec>("showWhitelist") {
     mainClass.set(application.mainClass)
     args("whitelist")
 }
+
+tasks.register<JavaExec>("showCoverage") {
+    dependsOn(tasks.classes)
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set(application.mainClass)
+    args("coverage")
+}
